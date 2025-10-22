@@ -1,6 +1,13 @@
-# Spark with Haddop on Docker
+# Setup Spark with Hadoop on Docker
 
-[![GitHub tag](https://img.shields.io/github/v/release/romans-weapon/spark-hadoop-hive-docker)](https://github.com/romans-weapon/spark-hadoop-hive-docker/tags)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/44436c70bdcf427abd4b2d60ef3900f2)](https://app.codacy.com/gh/AnudeepKonaboina/spark-with-hadoop-anywhere/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+
+[![Spark](https://img.shields.io/badge/Spark-2.4.7-E25A1C?logo=apachespark&logoColor=white)](https://spark.apache.org/releases/spark-release-2-4-7.html)
+[![Hadoop](https://img.shields.io/badge/Hadoop-2.10.1-66CCFF?logo=apachehadoop&logoColor=white)](https://hadoop.apache.org/releases.html)
+[![Hive](https://img.shields.io/badge/Hive-2.1.1-FDEE21?logo=apachehive&logoColor=black)](https://hive.apache.org/releases.html)
+[![Scala](https://img.shields.io/badge/Scala-2.11.12-DC322F?logo=scala&logoColor=white)](https://www.scala-lang.org/download/2.11.12.html)
+[![CentOS](https://img.shields.io/badge/CentOS-7-262577?logo=centos&logoColor=white)](https://wiki.centos.org/Manuals/ReleaseNotes/CentOS7)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-11.12-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/docs/11/release-11-12.html)
 
 
 This project allows you to spin up an environment containing spark-standalone with hadoop and hive leveraged inside docker containers.This can be used for exploring developing and testing  spark jobs on OSS spark with HDFS as storage , work with hive to run HQL queries and also execute HDFS commands.
@@ -10,11 +17,7 @@ This project allows you to spin up an environment containing spark-standalone wi
 
 ### Installation steps 
 
-#### MacOS
-
-Follow the official Docker Engine guide for your installation.
-
-- MacOS 
+- MacOS
 
 Install Homebrew
 ```
@@ -40,6 +43,7 @@ docker compose version
 docker run hello-world
 ```
 
+
 # Versions support for this branch
 
 | Service      | Version     |
@@ -47,6 +51,8 @@ docker run hello-world
 | Spark        | 2.4.7       |
 | Hadoop       | 2.10.1      |
 | Hive         | 2.1.1       |
+
+
 
 
 # Setps to setup
@@ -80,6 +86,8 @@ docker exec -it spark bash
 
 
 6. Once you get into the container,you will have spark ,hdfs and hive ready for you to use.
+
+
 
 
 # How to use it

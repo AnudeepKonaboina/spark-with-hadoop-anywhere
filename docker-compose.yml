@@ -1,0 +1,32 @@
+services:
+  hive-metastore:
+    image: "hive-metastore:latest"
+    restart: always
+    container_name: "hive_metastore"
+    hostname: "metastore.hive"
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+  spark:
+    image: "spark-with-hadoop-hive:latest"
+    hostname: "hadoop.spark"
+    container_name: "spark"
+    restart: always
+    ports:
+      - "4040:4040"
+      - "4041:4041"
+      - "8089:8088"
+      - "8090:18080"
+      - "2222:22"
+    expose:
+      - "22"
+    depends_on:
+      - hive-metastore
+    privileged: "true"
+    command: "/usr/local/bin/start-services.sh"
+    secrets:
+      - postgres_password
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt

@@ -77,14 +77,24 @@ RUN curl  https://archive.apache.org/dist/hive/hive-${hive_version}/apache-hive-
 ENV HIVE_HOME /usr/bin/apache-hive-${hive_version}-bin
 ENV PATH $HIVE_HOME/bin:$PATH
 RUN cp /usr/share/java/postgresql-jdbc.jar /usr/bin/apache-hive-${hive_version}-bin/lib/
-COPY configs/hive-site.xml $HIVE_HOME/conf/hive-site.xml
-RUN cp $HIVE_HOME/conf/hive-site.xml $SPARK_HOME/conf/ &&\
- echo "export HADOOP_HOME=/usr/bin/hadoop-${hadoop_version}" >> /usr/bin/hadoop-${hadoop_version}/bin/hive-config.sh
+# copy hive-site template only (rendered at runtime)
+COPY configs/hive-site.xml.template /configs/hive-site.xml.template
+RUN echo "export HADOOP_HOME=/usr/bin/hadoop-${hadoop_version}" >> /usr/bin/hadoop-${hadoop_version}/bin/hive-config.sh
 
 #setting ssh key
 RUN ssh-keygen -f $HOME/.ssh/id_rsa -t rsa -N "" && \
  cat $HOME/.ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys
 
+# ensure sshd has host keys and allows root key auth
+RUN ssh-keygen -A && \
+    sed -ri 's/^#?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -ri 's/^#?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config && \
+    sed -ri 's/^#?PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+
 COPY configs/config /usr/bin/config
 RUN mv /usr/bin/config $HOME/.ssh/ && chmod 600 $HOME/.ssh/config
 ############################################################ hive installtion end ###########################################################################################4
+
+# add startup script
+COPY scripts/start-services.sh /usr/local/bin/start-services.sh
+RUN chmod +x /usr/local/bin/start-services.sh

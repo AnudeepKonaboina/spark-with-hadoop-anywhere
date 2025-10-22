@@ -36,8 +36,8 @@ fi
 if [ -n "${HIVE_PW}" ] && [ -f "/usr/bin/apache-hive-2.1.1-bin/conf/hive-site.xml" ]; then
   cp /usr/bin/apache-hive-2.1.1-bin/conf/hive-site.xml /usr/bin/apache-hive-2.1.1-bin/conf/hive-site.xml.bak || true
 fi
-if [ -n "${HIVE_PW}" ] && [ -f "/configs/hive-site.xml.template" ]; then
-  sed "s/@@HIVE_DB_PASSWORD@@/${HIVE_PW//\//\\/}/g" /configs/hive-site.xml.template > /usr/bin/apache-hive-2.1.1-bin/conf/hive-site.xml
+if [ -n "${HIVE_PW}" ] && [ -f "/configs/hive-site.xml" ]; then
+  sed "s/@@HIVE_DB_PASSWORD@@/${HIVE_PW//\//\\/}/g" /configs/hive-site.xml > /usr/bin/apache-hive-2.1.1-bin/conf/hive-site.xml
   cp /usr/bin/apache-hive-2.1.1-bin/conf/hive-site.xml $SPARK_HOME/conf/hive-site.xml
 fi
 

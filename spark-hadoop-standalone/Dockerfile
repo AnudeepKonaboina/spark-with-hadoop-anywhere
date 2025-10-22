@@ -78,7 +78,7 @@ ENV HIVE_HOME /usr/bin/apache-hive-${hive_version}-bin
 ENV PATH $HIVE_HOME/bin:$PATH
 RUN cp /usr/share/java/postgresql-jdbc.jar /usr/bin/apache-hive-${hive_version}-bin/lib/
 # copy hive-site template only (rendered at runtime)
-COPY configs/hive-site.xml.template /configs/hive-site.xml.template
+COPY configs/hive-site.xml /configs/hive-site.xml
 RUN echo "export HADOOP_HOME=/usr/bin/hadoop-${hadoop_version}" >> /usr/bin/hadoop-${hadoop_version}/bin/hive-config.sh
 
 #setting ssh key

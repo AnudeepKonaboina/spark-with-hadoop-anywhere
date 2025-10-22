@@ -58,13 +58,13 @@ docker run hello-world
 # Setps to setup
 1. Clone the project abd navigate to the main directory
 ```commandline
-git clone -b spark-2.4.7 https://github.com/romans-weapon/spark-hadoop-hive-docker.git && cd spark-hadoop-hive-docker/
+git clone -b spark-2.4.7 https://github.com/romans-weapon/spark-hadoop-hive-docker.git](https://github.com/AnudeepKonaboina/spark-with-hadoop-anywhere.git && cd spark-with-hadoop-anywhere/
 ```
 
 2. Create the secrets password file (used by Postgres/Hive)
 ```commandline
 mkdir -p secrets
-echo "your-strong-password" > secrets/postgres_password.txt
+echo "hive" > secrets/postgres_password.txt
 ```
 
 3. Run the script file

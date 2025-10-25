@@ -4,10 +4,10 @@ set -euo pipefail
 # -----------------------------------------------------------------------------
 # Build images
 # -----------------------------------------------------------------------------
-docker build -t hive-metastore:latest \
+#docker build -t hive-metastore:latest \
   -f hive-metastore/Dockerfile .
 
-docker build -t spark-with-hadoop-hive:latest \
+#docker build -t spark-with-hadoop-hive:latest \
   -f spark-hadoop-standalone/Dockerfile .
 
 # -----------------------------------------------------------------------------

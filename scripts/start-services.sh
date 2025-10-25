@@ -5,6 +5,11 @@ set -euo pipefail
 ssh-keygen -A >/dev/null 2>&1 || true
 /usr/sbin/sshd || true
 
+# Hadoop 3.x requires explicit daemon users when running as root
+export HDFS_NAMENODE_USER=root
+export HDFS_DATANODE_USER=root
+export HDFS_SECONDARYNAMENODE_USER=root
+
 # If HDFS is not initialized, run interactive NameNode format
 if [ ! -d "/usr/bin/data/nameNode/current" ]; then
   hdfs namenode -format
@@ -33,12 +38,12 @@ HIVE_PW="${HIVE_DB_PASSWORD:-}"
 if [ -z "${HIVE_PW}" ] && [ -f "${HIVE_PW_FILE}" ]; then
   HIVE_PW="$(cat "${HIVE_PW_FILE}")"
 fi
-if [ -n "${HIVE_PW}" ] && [ -f "/usr/bin/apache-hive-2.1.1-bin/conf/hive-site.xml" ]; then
-  cp /usr/bin/apache-hive-2.1.1-bin/conf/hive-site.xml /usr/bin/apache-hive-2.1.1-bin/conf/hive-site.xml.bak || true
+if [ -n "${HIVE_PW}" ] && [ -f "${HIVE_HOME}/conf/hive-site.xml" ]; then
+  cp "${HIVE_HOME}/conf/hive-site.xml" "${HIVE_HOME}/conf/hive-site.xml.bak" || true
 fi
 if [ -n "${HIVE_PW}" ] && [ -f "/configs/hive-site.xml" ]; then
-  sed "s/@@HIVE_DB_PASSWORD@@/${HIVE_PW//\//\\/}/g" /configs/hive-site.xml > /usr/bin/apache-hive-2.1.1-bin/conf/hive-site.xml
-  cp /usr/bin/apache-hive-2.1.1-bin/conf/hive-site.xml $SPARK_HOME/conf/hive-site.xml
+  sed "s/@@HIVE_DB_PASSWORD@@/${HIVE_PW//\//\\/}/g" /configs/hive-site.xml > "${HIVE_HOME}/conf/hive-site.xml"
+  cp "${HIVE_HOME}/conf/hive-site.xml" "$SPARK_HOME/conf/hive-site.xml"
 fi
 
 # Wait for metastore DB DNS and TCP readiness (max ~60s)

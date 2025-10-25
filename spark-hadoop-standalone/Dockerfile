@@ -13,7 +13,8 @@ RUN cd /etc/yum.repos.d/ && \
     yum update -y
 
 #install pre-req libraries
-RUN yum install -y curl bash java-1.8.0-openjdk-devel openssh-server openssh-clients which wget vim postgresql-jdbc
+RUN yum install -y epel-release && \
+    yum install -y curl bash java-1.8.0-openjdk-devel openssh-server openssh-clients which wget vim postgresql-jdbc python3 python3-pip
 
 ################################################### Hadoop-client installation ###################################################################
 RUN curl https://archive.apache.org/dist/hadoop/core/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz -o hadoop.tgz && \
@@ -61,7 +62,9 @@ RUN export SPARK_DIST_CLASSPATH=$(hadoop classpath)
 
 RUN mv /usr/bin/spark-${spark_version}-bin-without-hadoop/conf/spark-env.sh.template /usr/bin/spark-${spark_version}-bin-without-hadoop/conf/spark-env.sh && \
  echo "export SPARK_DIST_CLASSPATH=$(hadoop classpath)" >> /usr/bin/spark-${spark_version}-bin-without-hadoop/conf/spark-env.sh && \
- echo "export SPARK_LOG_DIR=/usr/bin/spark-${spark_version}-bin-without-hadoop/logs" >> /usr/bin/spark-${spark_version}-bin-without-hadoop/conf/spark-env.sh
+ echo "export SPARK_LOG_DIR=/usr/bin/spark-${spark_version}-bin-without-hadoop/logs" >> /usr/bin/spark-${spark_version}-bin-without-hadoop/conf/spark-env.sh && \
+ echo "export PYSPARK_PYTHON=python3" >> /usr/bin/spark-${spark_version}-bin-without-hadoop/conf/spark-env.sh && \
+ echo "export PYSPARK_DRIVER_PYTHON=python3" >> /usr/bin/spark-${spark_version}-bin-without-hadoop/conf/spark-env.sh
 RUN mv /usr/bin/spark-${spark_version}-bin-without-hadoop/conf/spark-defaults.conf.template /usr/bin/spark-${spark_version}-bin-without-hadoop/conf/spark-defaults.conf && \
  echo "spark.eventLog.dir file:/usr/bin/spark-${spark_version}-bin-without-hadoop/logs" >> /usr/bin/spark-${spark_version}-bin-without-hadoop/conf/spark-defaults.conf && \
  echo "spark.history.fs.logDirectory file:/usr/bin/spark-${spark_version}-bin-without-hadoop/logs" >> /usr/bin/spark-${spark_version}-bin-without-hadoop/conf/spark-defaults.conf

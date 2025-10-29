@@ -18,7 +18,7 @@
   </property>
   <property>
     <name>javax.jdo.option.ConnectionPassword</name>
-    <value>hive</value>
+    <value>@@HIVE_DB_PASSWORD@@</value>
     <description>password to use against metastore database</description>
   </property>
   <property>

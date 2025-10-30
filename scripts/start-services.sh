@@ -60,6 +60,11 @@ for i in {1..60}; do
   sleep 1
 done
 
+# Initialize/upgrade Hive metastore schema using schematool (idempotent)
+if command -v schematool >/dev/null 2>&1; then
+  schematool -dbType postgres -initSchema -ifNotExists -verbose || true
+fi
+
 # Start Hive Metastore and HiveServer2
 hive --service metastore &
 sleep 15

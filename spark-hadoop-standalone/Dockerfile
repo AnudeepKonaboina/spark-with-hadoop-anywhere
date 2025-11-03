@@ -1,8 +1,8 @@
 FROM centos:7
 
-ARG hadoop_version=3.2.0
-ARG spark_version=3.1.1
-ARG hive_version=3.1.1
+ARG hadoop_version=3.3.6
+ARG spark_version=3.5.7
+ARG hive_version=3.1.3
 
 #pre-requisites
 

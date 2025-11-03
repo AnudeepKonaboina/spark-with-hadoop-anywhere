@@ -1,11 +1,11 @@
 # Setup Spark with Hadoop on Docker
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/44436c70bdcf427abd4b2d60ef3900f2)](https://app.codacy.com/gh/AnudeepKonaboina/spark-with-hadoop-anywhere/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![CodeFactor](https://www.codefactor.io/repository/github/anudeepkonaboina/spark-with-hadoop-anywhere/badge/spark-3.1.1)](https://www.codefactor.io/repository/github/anudeepkonaboina/spark-with-hadoop-anywhere/overview/spark-3.1.1)
+[![CodeFactor](https://www.codefactor.io/repository/github/anudeepkonaboina/spark-with-hadoop-anywhere/badge/spark-3.5.7)](https://www.codefactor.io/repository/github/anudeepkonaboina/spark-with-hadoop-anywhere/overview/spark-3.5.7)
 
-[![Spark](https://img.shields.io/badge/Spark-3.1.1-E25A1C?logo=apachespark&logoColor=white)](https://spark.apache.org/releases/spark-release-3-1-1.html)
-[![Hadoop](https://img.shields.io/badge/Hadoop-3.2.0-66CCFF?logo=apachehadoop&logoColor=white)](https://hadoop.apache.org/release/3.2.0.html)
-[![Hive](https://img.shields.io/badge/Hive-3.1.1-FDEE21?logo=apachehive&logoColor=black)](https://hive.apache.org/downloads.html)
+[![Spark](https://img.shields.io/badge/Spark-3.5.7-E25A1C?logo=apachespark&logoColor=white)](https://spark.apache.org/releases/spark-release-3-5-7.html)
+[![Hadoop](https://img.shields.io/badge/Hadoop-3.3.6-66CCFF?logo=apachehadoop&logoColor=white)](https://hadoop.apache.org/release/3.3.6.html)
+[![Hive](https://img.shields.io/badge/Hive-3.1.3-FDEE21?logo=apachehive&logoColor=black)](https://hive.apache.org/downloads.html)
 [![Scala](https://img.shields.io/badge/Scala-2.11.12-DC322F?logo=scala&logoColor=white)](https://www.scala-lang.org/download/2.11.12.html)
 [![CentOS](https://img.shields.io/badge/CentOS-7-262577?logo=centos&logoColor=white)](https://wiki.centos.org/Manuals/ReleaseNotes/CentOS7)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-11.12-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/docs/11/release-11-12.html)
@@ -49,9 +49,9 @@ docker run hello-world
 
 | Service      | Version     |
 | -----------  | ----------- |
-| Spark        | 3.1.1       |
-| Hadoop       | 3.2.0       |
-| Hive         | 3.1.1       |
+| Spark        | 3.5.7       |
+| Hadoop       | 3.3.6       |
+| Hive         | 3.1.3       |
 
 
 
@@ -59,7 +59,7 @@ docker run hello-world
 # Setps to setup
 1. Clone the project abd navigate to the main directory
 ```commandline
-git clone -b spark-3.1.1 https://github.com/AnudeepKonaboina/spark-with-hadoop-anywhere.git && cd spark-with-hadoop-anywhere/
+git clone -b spark-3.5.7 https://github.com/AnudeepKonaboina/spark-with-hadoop-anywhere.git && cd spark-with-hadoop-anywhere/
 ```
 
 2. Create the secrets password file (used by Postgres/Hive)

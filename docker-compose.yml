@@ -1,15 +1,15 @@
 services:
   hive-metastore:
     image: "docker4ops/hive-metastore:hive-3.1.1"
-    restart: always
     container_name: "hive_metastore"
+    restart: always
     hostname: "metastore.hive"
     environment:
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
     secrets:
       - postgres_password
   spark:
-    image: "docker4ops/spark-with-hadoop:spark-3.1.1_hadoop-3.2.0_hive-3.1.1"
+    image: "docker4ops/spark-with-hadoop:spark-3.5.7_hadoop-3.3.6_hive-3.1.1"
     hostname: "hadoop.spark"
     container_name: "spark"
     restart: always

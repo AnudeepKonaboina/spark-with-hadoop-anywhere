@@ -13,11 +13,11 @@
 This project allows you to spin up an environment containing spark-standalone with hadoop and hive leveraged inside docker containers.This can be used for exploring developing and testing  spark jobs on OSS spark with HDFS as storage , work with hive to run HQL queries and also execute HDFS commands.
 
 ## Prerequisites
-- You need to have **docker** engine and **docker-compose** installed in your vm/ local terminal
+- You need to have **docker** engine and **docker-compose** installed in your vm/local terminal. You need to have a superuser(sudo) permissions for installation
 
 ### Installation steps 
 
-- MacOS
+- To install docker on MacOS
 
 Install Homebrew
 ```
@@ -32,11 +32,13 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 brew install --cask docker
 ```
 
-- Ubuntu/Debian – see: [Install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/) · [Debian](https://docs.docker.com/engine/install/debian/)
 
-- Fedora/RHEL/CentOS – see: [Fedora](https://docs.docker.com/engine/install/fedora/) · [RHEL](https://docs.docker.com/engine/install/rhel/) · [CentOS](https://docs.docker.com/engine/install/centos/)
+- To install docker on  Ubuntu/Debian – see: [Install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/) · [Debian](https://docs.docker.com/engine/install/debian/)
 
-Verify installation:
+- To install docker on Fedora/RHEL/CentOS – see: [Fedora](https://docs.docker.com/engine/install/fedora/) · [RHEL](https://docs.docker.com/engine/install/rhel/) · [CentOS](https://docs.docker.com/engine/install/centos/)
+
+
+#### Verify installation:
 ```commandline
 docker --version
 docker compose version
@@ -44,7 +46,7 @@ docker run hello-world
 ```
 
 
-# Versions support for this branch
+# Supported Services and Versions
 
 | Service      | Version     |
 | -----------  | ----------- |

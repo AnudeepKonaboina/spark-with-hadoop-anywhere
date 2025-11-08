@@ -13,7 +13,8 @@ RUN cd /etc/yum.repos.d/ && \
     yum update -y
 
 #install pre-req libraries
-RUN yum install -y curl bash java-1.8.0-openjdk-devel openssh-server openssh-clients which wget vim postgresql-jdbc aria2
+RUN yum install -y epel-release && \
+    yum install -y curl bash java-1.8.0-openjdk-devel openssh-server openssh-clients which wget vim postgresql-jdbc aria2
 
 ################################################### Hadoop-client installation ###################################################################
 RUN aria2c -x 16 -s 16 -k 1M https://archive.apache.org/dist/hadoop/core/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz -o hadoop.tgz && \

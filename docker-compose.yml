@@ -25,8 +25,6 @@ services:
       - hive-metastore
     privileged: "true"
     command: "/usr/local/bin/start-services.sh"
-    environment:
-      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
     secrets:
       - postgres_password
 secrets:

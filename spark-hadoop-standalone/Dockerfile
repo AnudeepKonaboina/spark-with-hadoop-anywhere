@@ -13,10 +13,10 @@ RUN cd /etc/yum.repos.d/ && \
     yum update -y
 
 #install pre-req libraries
-RUN yum install -y curl bash java-1.8.0-openjdk-devel openssh-server openssh-clients which wget vim postgresql-jdbc
+RUN yum install -y curl bash java-1.8.0-openjdk-devel openssh-server openssh-clients which wget vim postgresql-jdbc aria2
 
 ################################################### Hadoop-client installation ###################################################################
-RUN curl https://archive.apache.org/dist/hadoop/core/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz -o hadoop.tgz && \
+RUN aria2c -x 16 -s 16 -k 1M https://archive.apache.org/dist/hadoop/core/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz -o hadoop.tgz && \
     tar -xzf hadoop.tgz && \
     mv hadoop-${hadoop_version} /usr/bin/ && \
     rm hadoop.tgz
@@ -47,7 +47,7 @@ COPY configs/mapred-site.xml $HADOOP_HOME/etc/hadoop/mapred-site.xml
 
 ##################################################### spark-standalone without Hadoop #####################################################################
 
-RUN curl https://archive.apache.org/dist/spark/spark-${spark_version}/spark-${spark_version}-bin-without-hadoop.tgz -o spark.tgz && \
+RUN aria2c -x 16 -s 16 -k 1M https://archive.apache.org/dist/spark/spark-${spark_version}/spark-${spark_version}-bin-without-hadoop.tgz -o spark.tgz && \
     tar -xzf spark.tgz && \
     mv spark-${spark_version}-bin-without-hadoop /usr/bin/ && \
     mkdir /usr/bin/spark-${spark_version}-bin-without-hadoop/logs && \
@@ -68,7 +68,7 @@ RUN mv /usr/bin/spark-${spark_version}-bin-without-hadoop/conf/spark-defaults.co
 ########################################################spark-standalone installation end###########################################################################################
 
 ###########################################################hive client installation ###################################################################################################
-RUN curl  https://archive.apache.org/dist/hive/hive-${hive_version}/apache-hive-${hive_version}-bin.tar.gz -o hive.tgz && \
+RUN aria2c -x 16 -s 16 -k 1M https://archive.apache.org/dist/hive/hive-${hive_version}/apache-hive-${hive_version}-bin.tar.gz -o hive.tgz && \
     tar -xzf hive.tgz && \
     mv apache-hive-${hive_version}-bin /usr/bin/ && \
     rm -rf hive.tgz

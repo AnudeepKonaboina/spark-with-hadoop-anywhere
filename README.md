@@ -1,7 +1,6 @@
 # Setup Spark with Hadoop on Docker
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/44436c70bdcf427abd4b2d60ef3900f2)](https://app.codacy.com/gh/AnudeepKonaboina/spark-with-hadoop-anywhere/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![CodeFactor](https://www.codefactor.io/repository/github/anudeepkonaboina/spark-with-hadoop-anywhere/badge/spark-3.1.1)](https://www.codefactor.io/repository/github/anudeepkonaboina/spark-with-hadoop-anywhere/overview/spark-3.1.1)
 
 [![Spark](https://img.shields.io/badge/Spark-3.1.1-E25A1C?logo=apachespark&logoColor=white)](https://spark.apache.org/releases/spark-release-3-1-1.html)
 [![Hadoop](https://img.shields.io/badge/Hadoop-3.2.0-66CCFF?logo=apachehadoop&logoColor=white)](https://hadoop.apache.org/release/3.2.0.html)
@@ -13,7 +12,7 @@
 
 This project allows you to spin up an environment containing spark-standalone with hadoop and hive leveraged inside docker containers.This can be used for exploring developing and testing  spark jobs on OSS spark with HDFS as storage , work with hive to run HQL queries and also execute HDFS commands.
 
-## Prerequisites
+# Prerequisites
 - You need to have **docker** engine and **docker-compose** installed in your vm/ local terminal
 
 ### Installation steps 
@@ -37,7 +36,8 @@ brew install --cask docker
 
 - Fedora/RHEL/CentOS – see: [Fedora](https://docs.docker.com/engine/install/fedora/) · [RHEL](https://docs.docker.com/engine/install/rhel/) · [CentOS](https://docs.docker.com/engine/install/centos/)
 
-Verify installation:
+
+### Verify installation:
 ```commandline
 docker --version
 docker compose version
@@ -65,59 +65,54 @@ git clone -b spark-3.1.1 https://github.com/AnudeepKonaboina/spark-with-hadoop-a
 2. Create the secrets password file (used by Postgres/Hive)
 ```commandline
 mkdir -p secrets
-echo "your-strong-password" > secrets/postgres_password.txt
+echo "<your-strong-password>" > secrets/postgres_password.txt
 ```
 
 3. Run the setup script
 
-There are two ways to start the setup script
+- There are two ways to start the setup script
+  - Run  `sh setup-spark.sh --run`  to pull pre-built images from DockerHub (quick setup)
+  - Run  `sh setup-spark.sh --build --run`  to build images locally from scratch and run
 
-```bash
-# Quick setup - Pull pre-built images from DockerHub
-./setup-spark.sh --run
+  **Note:** The `--build` flag must always be used with `--run `. 
 
-# Build from source - Build images locally and run
-./setup-spark.sh --build --run
-```
+   
 
-**Arguments:**
-- `--run` : Pull images from DockerHub and run (quick setup)
-- `--build --run` : Build images locally from Dockerfiles and run
-   **Note:** The `--build` flag must always be used with `--run `.
-
-
-**Option 1: Quick Setup (Pull images from DockerHub)**
+#### **Option 1: Quick Setup (Pull's images from DockerHub)**
 ```commandline
 sh setup-spark.sh --run
 ```
-This will:
-- Pull pre-built images from Docker Hub
-- Start the services
-- Initialize HDFS and Hive
-- Quick and easy setup - recommended for most users
+  This will:
+  - Pull pre-built images from Docker Hub
+  - Start the services
+  - Initialize HDFS and Hive
+  - Quick and easy setup - recommended for most users
 
-**Option 2: Build images locally using Dockerfiles**
+
+#### **Option 2: Build's images locally from scratch using Dockerfile**
 ```commandline
 sh setup-spark.sh --build --run
 ```
-This will:
-- Build Docker images locally from source
-- Use the locally built images
-- Start the services
-- Initialize HDFS and Hive
-- Useful if you need to customize the Dockerfiles
+  This will:
+  - Build Docker images locally from Dockerfiles
+  - Use the locally built images
+  - Start the services
+  - Initialize HDFS and Hive
+  - Useful if you need to customize the Dockerfiles
+
+
 
 4. After the setup is completed you will have two containers started
 
-If you used **`--run`** (pulled from DockerHub), you'll see:
+If you used **`--run`** option (pulled from DockerHub), you'll see:
 ```commandline
 anudeep.k@SHELL% docker images
 REPOSITORY                     TAG                                    IMAGE ID       CREATED             SIZE
-docker4ops/spark-with-hadoop   spark-3.5.7_hadoop-3.3.6_hive-3.1.1    4c69c4d0041d   About an hour ago   4.24GB
+docker4ops/spark-with-hadoop   spark-3.1.1_hadoop-3.2.0_hive-3.1.1    4c69c4d0041d   About an hour ago   4.24GB
 docker4ops/hive-metastore      hive-3.1.1                             31287c798b1d   About an hour ago   286MB
 ```
 
-If you used **`--build --run`** (built locally), you'll see:
+If you used **`--build --run`** option (built locally), you'll see:
 ```commandline
 anudeep.k@SHELL% docker images
 REPOSITORY                     TAG                                    IMAGE ID       CREATED             SIZE
@@ -125,8 +120,9 @@ spark-with-hadoop              local                                  4c69c4d004
 hive-metastore                 local                                  31287c798b1d   About an hour ago   286MB
 ```
 
-Containers running as shown below
+- Containers running as shown below
 ```commandline
+anudeep.k@SHELL% docker ps
 CONTAINER ID   IMAGE                     COMMAND                  CREATED         STATUS         PORTS                                                                                                                                                                                                          NAMES
 1af5afd31789   spark-with-hadoop:local   "/usr/local/bin/star…"   3 minutes ago   Up 3 minutes   23/tcp, 0.0.0.0:4040-4041->4040-4041/tcp, [::]:4040-4041->4040-4041/tcp, 0.0.0.0:2222->22/tcp, [::]:2222->22/tcp, 0.0.0.0:8089->8088/tcp, [::]:8089->8088/tcp, 0.0.0.0:8090->18080/tcp, [::]:8090->18080/tcp   spark
 c8c3e725a73c   hive-metastore:local      "docker-entrypoint.s…"   3 minutes ago   Up 3 minutes   5432/tcp                                                                                                                                                                                                       hive_metastore
@@ -155,22 +151,22 @@ SLF4J: Found binding in [jar:file:/usr/bin/apache-hive-3.1.1-bin/lib/log4j-slf4j
 SLF4J: Found binding in [jar:file:/usr/bin/hadoop-3.2.0/share/hadoop/common/lib/slf4j-log4j12-1.7.25.jar!/org/slf4j/impl/StaticLoggerBinder.class]
 SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
 SLF4J: Actual binding is of type [org.apache.logging.slf4j.Log4jLoggerFactory]
-Hive Session ID = f05dd6b8-3de1-4687-bb96-295203228330
+Hive Session ID = 132d2bc5-56c9-43f6-88b3-199aa3c72c97
 
 Logging initialized using configuration in jar:file:/usr/bin/apache-hive-3.1.1-bin/lib/hive-common-3.1.1.jar!/hive-log4j2.properties Async: true
-Hive Session ID = 584bf0da-49b8-4b67-995c-f693aeb48706
+Hive Session ID = 37366fc9-c629-42e9-9677-a9ac6caf4137
 Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
-hive> 
+hive>
 ```
 
 #### To run hdfs commands within container:
 ```commandline
 [root@hadoop /]# hdfs dfs -ls /
-21/06/02 12:49:26 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2025-11-10 16:03:58,549 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
 Found 2 items
-drwxr-xr-x   - root supergroup          0 2021-06-02 12:48 /tmp
-drwxr-xr-x   - root supergroup          0 2021-06-02 12:22 /user
-[root@hadoop /]#
+drwxrwxrwt   - root supergroup          0 2025-11-10 15:17 /tmp
+drwxr-xr-x   - root supergroup          0 2025-11-10 15:17 /user
+[root@hadoop /]# 
 ```
 
 #### To run spark shell within container:
@@ -218,6 +214,39 @@ Transaction isolation: TRANSACTION_REPEATABLE_READ
 0: jdbc:hive2://>
 ```
 
+# Clean-up commands:
+
+Once your testing is completed ,its time to clean up your containers. Use the below steps for cleanup
+
+1. Run **`docker-compose down`** to clean stop all the running containers
+````
+anudeep.k@SHELL spark-with-hadoop-anywhere % docker-compose down
+[+] Running 3/3
+ ✔ Container spark                             Removed                                                                                               10.4s 
+ ✔ Container hive_metastore                    Removed                                                                                                0.1s 
+ ✔ Network spark-with-hadoop-anywhere_default  Removed
+````
+
+2. Run the command **`docker rmi -f $(docker images -a -q)`** to remove all the images you pulled. You can also run `docker system prune` to do a disk cleanup and reclaim space
+
+```aiignore
+anudeep.k@SHELL spark-with-hadoop-anywhere % docker rmi -f $(docker images -a -q)
+Untagged: docker4ops/spark-with-hadoop:spark-2.4.7_hadoop-2.10.1_hive-2.1.1
+Deleted: sha256:4c69c4d0041d625f1f6d16649c56517db565bc429dca8320fc1c86082d33bc5e
+Untagged: docker4ops/hive-metastore:hive-2.1.1
+Deleted: sha256:31287c798b1de021668fce9370994ae3b8a7f78e9e3d05cbef7816a0db629e78
+
+anudeep.k@SHELL spark-with-hadoop-anywhere % docker system prune                 
+WARNING! This will remove:
+  - all stopped containers
+  - all networks not used by at least one container
+  - all dangling images
+  - unused build cache
+
+Are you sure you want to continue? [y/N] y
+Total reclaimed space: 0B
+
+```
 
 
 # Author

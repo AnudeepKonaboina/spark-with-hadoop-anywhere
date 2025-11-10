@@ -12,7 +12,7 @@
 
 This project allows you to spin up an environment containing spark-standalone with hadoop and hive leveraged inside docker containers.This can be used for exploring developing and testing  spark jobs on OSS spark with HDFS as storage , work with hive to run HQL queries and also execute HDFS commands.
 
-## Prerequisites
+# Prerequisites
 - You need to have **docker** engine and **docker-compose** installed in your vm/local terminal. You need to have a superuser(sudo) permissions for installation
 
 ### Installation steps 
@@ -55,23 +55,6 @@ docker run hello-world
 | Hive         | 2.1.1       |
 
 
-# Setup Script Usage
-
-There are two ways to start the setup script
-
-```bash
-# Quick setup - Pull pre-built images from DockerHub
-./setup-spark.sh --run
-
-# Build from source - Build images locally and run
-./setup-spark.sh --build --run
-```
-
-**Arguments:**
-- `--run` : Pull images from DockerHub and run (quick setup)
-- `--build --run` : Build images locally from Dockerfiles and run
-   **Note:** The `--build` flag must always be used with `--run `.
-
 
 # Steps to setup
 1. Clone the project and navigate to the main directory
@@ -87,45 +70,63 @@ echo "your_strong_password" > secrets/postgres_password.txt
 
 3. Run the setup script
 
-The setup script supports two modes:
+- There are two ways to start the setup script
+  - Run  `sh setup-spark.sh --run`  to pull pre-built images from DockerHub (quick setup)
+  - Run  `sh setup-spark.sh --build --run`  to build images locally from scratch and run
 
-**Option 1: Quick Setup (Pull from DockerHub)**
+  **Note:** The `--build` flag must always be used with `--run `. 
+
+   
+
+#### **Option 1: Quick Setup (Pull's images from DockerHub)**
 ```commandline
 sh setup-spark.sh --run
 ```
-This will:
-- Pull pre-built images from Docker Hub
-- Start the services
-- Initialize HDFS and Hive
-- Quick and easy setup - recommended for most users
+  This will:
+  - Pull pre-built images from Docker Hub
+  - Start the services
+  - Initialize HDFS and Hive
+  - Quick and easy setup - recommended for most users
 
-**Option 2: Build from Source**
+
+#### **Option 2: Build's images locally from scratch using Dockerfile**
 ```commandline
 sh setup-spark.sh --build --run
 ```
-This will:
-- Build Docker images locally from source
-- Use the locally built images
-- Start the services
-- Initialize HDFS and Hive
-- Useful if you need to customize the Dockerfiles
+  This will:
+  - Build Docker images locally from Dockerfiles
+  - Use the locally built images
+  - Start the services
+  - Initialize HDFS and Hive
+  - Useful if you need to customize the Dockerfiles
+
+
 
 4. After the setup is completed you will have two containers started
 
-If you used **`--run`** (pulled from DockerHub), you'll see:
+If you used **`--run`** option (pulled from DockerHub), you'll see:
 ```commandline
 anudeep.k@SHELL% docker images
 REPOSITORY                     TAG                                    IMAGE ID       CREATED             SIZE
-docker4ops/spark-with-hadoop   spark-2.4.7_hadoop-2.10.1_hive-2.1.1   4c69c4d0041d   About an hour ago   4.24GB
-docker4ops/hive-metastore      hive-2.1.1                             31287c798b1d   About an hour ago   286MB
+docker4ops/spark-with-hadoop   spark-3.1.1_hadoop-3.2.0_hive-3.1.1    4c69c4d0041d   About an hour ago   4.24GB
+docker4ops/hive-metastore      hive-3.1.1                             31287c798b1d   About an hour ago   286MB
 ```
 
-If you used **`--build --run`** (built locally), you'll see:
+If you used **`--build --run`** option (built locally), you'll see:
 ```commandline
 anudeep.k@SHELL% docker images
 REPOSITORY                     TAG                                    IMAGE ID       CREATED             SIZE
 spark-with-hadoop              local                                  4c69c4d0041d   About an hour ago   4.24GB
 hive-metastore                 local                                  31287c798b1d   About an hour ago   286MB
+```
+
+- Containers running as shown below
+```commandline
+anudeep.k@SHELL% docker ps
+CONTAINER ID   IMAGE                     COMMAND                  CREATED         STATUS         PORTS                                                                                                                                                                                                          NAMES
+1af5afd31789   spark-with-hadoop:local   "/usr/local/bin/star…"   3 minutes ago   Up 3 minutes   23/tcp, 0.0.0.0:4040-4041->4040-4041/tcp, [::]:4040-4041->4040-4041/tcp, 0.0.0.0:2222->22/tcp, [::]:2222->22/tcp, 0.0.0.0:8089->8088/tcp, [::]:8089->8088/tcp, 0.0.0.0:8090->18080/tcp, [::]:8090->18080/tcp   spark
+c8c3e725a73c   hive-metastore:local      "docker-entrypoint.s…"   3 minutes ago   Up 3 minutes   5432/tcp                                                                                                                                                                                                       hive_metastore
+
 ```
 
 5. SSH into the spark container using the command
@@ -169,7 +170,7 @@ drwxr-xr-x   - root supergroup          0 2021-06-02 12:22 /user
 #### To run spark shell within container:
 ```commandline
 [root@hadoop /]# spark-shell
-21/06/02 12:50:55 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+25/10/02 12:50:55 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
 Setting default log level to "WARN".
 To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
 Spark context Web UI available at http://hadoop.spark:4040
@@ -207,7 +208,7 @@ Enter password for jdbc:hive2://: ****
 21/06/02 14:39:22 [main]: WARN session.SessionState: METASTORE_FILTER_HOOK will be ignored, since hive.security.authorization.manager is set to instance of HiveAuthorizerFactory.
 Connected to: Apache Hive (version 2.1.1)
 Driver: Hive JDBC (version 2.1.1)
-21/06/02 14:39:22 [main]: WARN jdbc.HiveConnection: Request to set autoCommit to false; Hive does not support autoCommit=false.
+25/10/02 14:39:22 [main]: WARN jdbc.HiveConnection: Request to set autoCommit to false; Hive does not support autoCommit=false.
 Transaction isolation: TRANSACTION_REPEATABLE_READ
 0: jdbc:hive2://>
 ```

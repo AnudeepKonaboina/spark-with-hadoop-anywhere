@@ -5,11 +5,11 @@ set -euo pipefail
 # -----------------------------------------------------------------------------
 # Build images --commented since the images will be pull from docker-hub
 # -----------------------------------------------------------------------------
-#docker build -t hive-metastore:latest \
-# -f hive-metastore/Dockerfile .
+docker build -t hive-metastore:latest \
+ -f hive-metastore/Dockerfile .
 
-#docker build -t spark-with-hadoop-hive:latest \
-# -f spark-hadoop-standalone/Dockerfile .
+docker build -t spark-with-hadoop-hive:latest \
+ -f spark-hadoop-standalone/Dockerfile .
 
 # -----------------------------------------------------------------------------
 # Start services
@@ -17,8 +17,8 @@ set -euo pipefail
 docker-compose up -d
 
 # Initialize HDFS and Hive warehouse dirs
-docker exec -it spark bash -lc '
-  hdfs namenode -format &&
+docker exec -i spark bash -lc '
+  hdfs namenode -format -force &&
   start-dfs.sh &&
   hdfs dfs -mkdir -p /tmp &&
   hdfs dfs -mkdir -p /user/hive/warehouse &&
@@ -30,22 +30,22 @@ docker exec -d spark bash -lc '
   hive --service metastore &
   sleep 15
   hive --service hiveserver2
-
+'
 
 echo ""
 echo "=================================================="
 echo "Setup complete!"
 echo "=================================================="
 echo ""
-echo "To connect to the Spark container:"
+echo "Run the following command to connect to the Spark container:"
 echo "  docker exec -it spark bash"
 echo ""
-echo "Available services:"
+echo "Run the following commands to start the following services:"
 echo "  - Spark Shell: spark-shell"
-echo "  - PySpark: pyspark"
-echo "  - Hive: hive"
-echo "  - Beeline: beeline"
-echo "  - HDFS: hdfs dfs -ls /"
+echo "  - PySpark    :  pyspark"
+echo "  - Hive       : hive"
+echo "  - Beeline    : beeline"
+echo "  - HDFS       : hdfs dfs -ls /"
 echo ""
 echo "=================================================="
-'
+

@@ -5,9 +5,9 @@ set -euo pipefail
 ssh-keygen -A >/dev/null 2>&1 || true
 /usr/sbin/sshd || true
 
-# If HDFS is not initialized, run interactive NameNode format
+# If HDFS is not initialized, run non-interactive NameNode format
 if [ ! -d "/usr/bin/data/nameNode/current" ]; then
-  hdfs namenode -format
+  hdfs namenode -format -force
 fi
 
 # Start HDFS daemons

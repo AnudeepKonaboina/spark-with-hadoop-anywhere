@@ -12,7 +12,7 @@
 
 This project allows you to spin up an environment containing spark-standalone with hadoop and hive leveraged inside docker containers.This can be used for exploring developing and testing  spark jobs on OSS spark with HDFS as storage , work with hive to run HQL queries and also execute HDFS commands.
 
-# Prerequisites
+# Pre-requisites
 - You need to have **docker** engine and **docker-compose** installed in your vm/local terminal. You need to have a superuser(sudo) permissions for installation
 
 ### Installation steps 

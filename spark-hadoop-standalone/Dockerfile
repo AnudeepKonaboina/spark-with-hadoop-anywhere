@@ -72,9 +72,9 @@ ENV SPARK_HOME=/usr/bin/spark-${spark_version}-bin-without-hadoop \
 
 ENV PATH=${SPARK_HOME}/bin:${SPARK_HOME}/sbin:${PATH}
 
-RUN export SPARK_DIST_CLASSPATH=$(hadoop classpath) && \
+RUN export SPARK_DIST_CLASSPATH="$(hadoop classpath)" && \
     mv ${SPARK_HOME}/conf/spark-env.sh.template ${SPARK_HOME}/conf/spark-env.sh && \
-    echo "export SPARK_DIST_CLASSPATH=$(hadoop classpath)" >> ${SPARK_HOME}/conf/spark-env.sh && \
+    echo "export SPARK_DIST_CLASSPATH=\$(hadoop classpath)" >> ${SPARK_HOME}/conf/spark-env.sh && \
     echo "export SPARK_LOG_DIR=${SPARK_LOG_DIR}" >> ${SPARK_HOME}/conf/spark-env.sh && \
     mv ${SPARK_HOME}/conf/spark-defaults.conf.template ${SPARK_HOME}/conf/spark-defaults.conf && \
     echo "spark.eventLog.dir file:${SPARK_LOG_DIR}" >> ${SPARK_HOME}/conf/spark-defaults.conf && \

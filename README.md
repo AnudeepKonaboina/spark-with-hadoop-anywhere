@@ -66,7 +66,7 @@ git clone -b spark-2.4.7 https://github.com/AnudeepKonaboina/spark-with-hadoop-a
 2. Create the secrets password file (used by Postgres/Hive)
 ```commandline
 mkdir -p secrets
-echo "hive" > secrets/postgres_password.txt
+echo "your_strong_password" > secrets/postgres_password.txt
 ```
 
 3. Run the script file
@@ -76,9 +76,10 @@ sh setup-spark.sh
 
 4. After the setup is completed you will have two containers started as shown below
 ```commandline
-CONTAINER ID   IMAGE                           COMMAND                  CREATED       STATUS       PORTS                                                                                                                                                                                                  NAMES
-bd27eb6ee76a   spark-with-hadoop-hive:latest   "/usr/local/bin/star…"   4 hours ago   Up 4 hours   0.0.0.0:4040-4041->4040-4041/tcp, [::]:4040-4041->4040-4041/tcp, 0.0.0.0:2222->22/tcp, [::]:2222->22/tcp, 0.0.0.0:8089->8088/tcp, [::]:8089->8088/tcp, 0.0.0.0:8090->18080/tcp, [::]:8090->18080/tcp   spark
-28bec05777e6   hive-metastore:latest           "docker-entrypoint.s…"   4 hours ago   Up 4 hours   5432/tcp                                                                                                                                                                                               hive_metastore
+anudeep.k@SHELL% docker images
+REPOSITORY                     TAG                                    IMAGE ID       CREATED             SIZE
+docker4ops/spark-with-hadoop   spark-2.4.7_hadoop-2.10.1_hive-2.1.1   4c69c4d0041d   About an hour ago   4.24GB
+docker4ops/hive-metastore      hive-2.1.1                             31287c798b1d   About an hour ago   286MB                                                                                                                                                                                          hive_metastore
 ```
 
 5. SSH into the spark container using the command
@@ -87,7 +88,7 @@ docker exec -it spark bash
 ```
 
 
-6. Once you get into the container,you will have spark ,hdfs and hive ready for you to use.
+6. Once you get into the container,you will have spark ,hdfs and hive service inside the container ready for you to use.
 
 
 
@@ -163,6 +164,41 @@ Driver: Hive JDBC (version 2.1.1)
 21/06/02 14:39:22 [main]: WARN jdbc.HiveConnection: Request to set autoCommit to false; Hive does not support autoCommit=false.
 Transaction isolation: TRANSACTION_REPEATABLE_READ
 0: jdbc:hive2://>
+```
+
+
+# Clean-up commands:
+
+Once your testing is completed ,its time to clean up your containers. Use the below steps for cleanup
+
+1. Run **`docker-compose down`** to clean stop all the running containers
+````
+anudeep.k@SHELL spark-with-hadoop-anywhere % docker-compose down
+[+] Running 3/3
+ ✔ Container spark                             Removed                                                                                               10.4s 
+ ✔ Container hive_metastore                    Removed                                                                                                0.1s 
+ ✔ Network spark-with-hadoop-anywhere_default  Removed
+````
+
+2. Run the command **`docker rmi -f $(docker images -a -q)`** to remove all the images you pulled. You can also run `docker system prune` to do a disk cleanup and reclaim space
+
+```aiignore
+anudeep.k@SHELL spark-with-hadoop-anywhere % docker rmi -f $(docker images -a -q)
+Untagged: docker4ops/spark-with-hadoop:spark-2.4.7_hadoop-2.10.1_hive-2.1.1
+Deleted: sha256:4c69c4d0041d625f1f6d16649c56517db565bc429dca8320fc1c86082d33bc5e
+Untagged: docker4ops/hive-metastore:hive-2.1.1
+Deleted: sha256:31287c798b1de021668fce9370994ae3b8a7f78e9e3d05cbef7816a0db629e78
+
+anudeep.k@SHELL spark-with-hadoop-anywhere % docker system prune                 
+WARNING! This will remove:
+  - all stopped containers
+  - all networks not used by at least one container
+  - all dangling images
+  - unused build cache
+
+Are you sure you want to continue? [y/N] y
+Total reclaimed space: 0B
+
 ```
 
 

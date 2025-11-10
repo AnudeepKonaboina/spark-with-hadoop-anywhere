@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # -----------------------------------------------------------------------------
-# Build images
+# Build images --commented since the images will be pull from docker-hub
 # -----------------------------------------------------------------------------
 #docker build -t hive-metastore:latest \
 # -f hive-metastore/Dockerfile .
@@ -48,4 +48,4 @@ echo "  - Beeline: beeline"
 echo "  - HDFS: hdfs dfs -ls /"
 echo ""
 echo "=================================================="
-
+'

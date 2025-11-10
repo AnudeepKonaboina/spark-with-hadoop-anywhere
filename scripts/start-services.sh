@@ -14,7 +14,7 @@ fi
 start-dfs.sh
 
 # Wait for HDFS NameNode RPC to be available before using hdfs dfs (max ~60s)
-for i in {1..60}; do
+for _ in {1..60}; do
   if (echo > /dev/tcp/hadoop.spark/9000) >/dev/null 2>&1; then
     break
   fi
@@ -37,23 +37,27 @@ fi
 # If password is available, replace placeholder in hive-site.xml template
 if [ -n "${HIVE_PW}" ] && [ -n "${HIVE_HOME}" ] && [ -d "${HIVE_HOME}/conf" ]; then
   # Backup existing hive-site.xml if it exists
-  [ -f "${HIVE_HOME}/conf/hive-site.xml" ] && cp "${HIVE_HOME}/conf/hive-site.xml" "${HIVE_HOME}/conf/hive-site.xml.bak" || true
+  if [ -f "${HIVE_HOME}/conf/hive-site.xml" ]; then
+    cp "${HIVE_HOME}/conf/hive-site.xml" "${HIVE_HOME}/conf/hive-site.xml.bak" || true
+  fi
   
   # Replace password placeholder in template and copy to Hive and Spark conf
   if [ -f "/configs/hive-site.xml" ]; then
     sed "s/@@HIVE_DB_PASSWORD@@/${HIVE_PW//\//\\/}/g" /configs/hive-site.xml > "${HIVE_HOME}/conf/hive-site.xml"
-    [ -d "$SPARK_HOME/conf" ] && cp "${HIVE_HOME}/conf/hive-site.xml" "$SPARK_HOME/conf/hive-site.xml" || true
+    if [ -d "${SPARK_HOME}/conf" ]; then
+      cp "${HIVE_HOME}/conf/hive-site.xml" "${SPARK_HOME}/conf/hive-site.xml" || true
+    fi
   fi
 fi
 
 # Wait for metastore DB DNS and TCP readiness (max ~60s)
-for i in {1..60}; do
+for _ in {1..60}; do
   if getent hosts hive-metastore >/dev/null 2>&1; then
     break
   fi
   sleep 1
 done
-for i in {1..60}; do
+for _ in {1..60}; do
   if (echo > /dev/tcp/hive-metastore/5432) >/dev/null 2>&1; then
     break
   fi

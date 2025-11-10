@@ -100,15 +100,15 @@ RUN cp /usr/share/java/postgresql-jdbc.jar ${HIVE_HOME}/lib/ && \
 COPY configs/hive-site.xml /configs/hive-site.xml
 
 #setting ssh key and sshd config
-RUN ssh-keygen -f $HOME/.ssh/id_rsa -t rsa -N "" && \
-    cat $HOME/.ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys && \
+RUN ssh-keygen -f "$HOME/.ssh/id_rsa" -t rsa -N "" && \
+    cat "$HOME/.ssh/id_rsa.pub" >> "$HOME/.ssh/authorized_keys" && \
     ssh-keygen -A && \
     sed -ri 's/^#?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
     sed -ri 's/^#?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config && \
     sed -ri 's/^#?PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config
 
 COPY configs/config /usr/bin/config
-RUN mv /usr/bin/config $HOME/.ssh/ && chmod 600 $HOME/.ssh/config
+RUN mv /usr/bin/config "$HOME/.ssh/" && chmod 600 "$HOME/.ssh/config"
 ############################################################ hive installtion end ###########################################################################################
 
 # add startup script

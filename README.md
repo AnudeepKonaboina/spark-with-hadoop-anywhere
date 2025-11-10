@@ -55,10 +55,26 @@ docker run hello-world
 | Hive         | 2.1.1       |
 
 
+# Setup Script Usage
+
+There are two ways to start the setup script
+
+```bash
+# Quick setup - Pull pre-built images from DockerHub
+./setup-spark.sh --run
+
+# Build from source - Build images locally and run
+./setup-spark.sh --build --run
+```
+
+**Arguments:**
+- `--run` : Pull images from DockerHub and run (quick setup)
+- `--build --run` : Build images locally from Dockerfiles and run
+   **Note:** The `--build` flag must always be used with `--run `.
 
 
-# Setps to setup
-1. Clone the project abd navigate to the main directory
+# Steps to setup
+1. Clone the project and navigate to the main directory
 ```commandline
 git clone -b spark-2.4.7 https://github.com/AnudeepKonaboina/spark-with-hadoop-anywhere.git && cd spark-with-hadoop-anywhere/
 ```
@@ -69,17 +85,47 @@ mkdir -p secrets
 echo "your_strong_password" > secrets/postgres_password.txt
 ```
 
-3. Run the script file
-```commandline
-sh setup-spark.sh
-```
+3. Run the setup script
 
-4. After the setup is completed you will have two containers started as shown below
+The setup script supports two modes:
+
+**Option 1: Quick Setup (Pull from DockerHub)**
+```commandline
+sh setup-spark.sh --run
+```
+This will:
+- Pull pre-built images from Docker Hub
+- Start the services
+- Initialize HDFS and Hive
+- Quick and easy setup - recommended for most users
+
+**Option 2: Build from Source**
+```commandline
+sh setup-spark.sh --build --run
+```
+This will:
+- Build Docker images locally from source
+- Use the locally built images
+- Start the services
+- Initialize HDFS and Hive
+- Useful if you need to customize the Dockerfiles
+
+4. After the setup is completed you will have two containers started
+
+If you used **`--run`** (pulled from DockerHub), you'll see:
 ```commandline
 anudeep.k@SHELL% docker images
 REPOSITORY                     TAG                                    IMAGE ID       CREATED             SIZE
 docker4ops/spark-with-hadoop   spark-2.4.7_hadoop-2.10.1_hive-2.1.1   4c69c4d0041d   About an hour ago   4.24GB
-docker4ops/hive-metastore      hive-2.1.1                             31287c798b1d   About an hour ago   286MB                                                                                                                                                                                          hive_metastore
+docker4ops/hive-metastore      hive-2.1.1                             31287c798b1d   About an hour ago   286MB
+```
+
+If you used **`--build --run`** (built locally), you'll see:
+```commandline
+anudeep.k@SHELL% docker images
+REPOSITORY                     TAG                                    IMAGE ID       CREATED             SIZE
+spark-with-hadoop              local                                  4c69c4d0041d   About an hour ago   4.24GB
+hive-metastore                 local                                  31287c798b1d   About an hour ago   286MB
 ```
 
 5. SSH into the spark container using the command

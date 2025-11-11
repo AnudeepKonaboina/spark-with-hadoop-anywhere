@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# Ensure we are running under bash even if invoked via `sh`
+if [ -z "${BASH_VERSION:-}" ]; then
+  exec bash "$0" "$@"
+fi
+
 # =============================================================================
 # Spark with Hadoop Setup Script
 # =============================================================================
@@ -134,31 +139,63 @@ wait_for_condition "containers" \
 # -----------------------------------------------------------------------------
 
 print_section "Initializing HDFS"
-docker exec spark bash -lc '
+docker exec spark bash -c '
   hdfs namenode -format -force &&
-  start-dfs.sh &&
+  HDFS_NAMENODE_USER=root HDFS_DATANODE_USER=root HDFS_SECONDARYNAMENODE_USER=root start-dfs.sh &&
   sleep 5 &&
   hdfs dfs -mkdir -p /tmp &&
   hdfs dfs -mkdir -p /user/hive/warehouse &&
   hdfs dfs -chmod g+w /user/hive/warehouse
-' 2>&1 | grep -v -e "warning: setlocale" -e "namenode is running" -e "Stop it first" -e ".pid file is empty" || true
+' >/dev/null 2>&1 || true
+echo "✓ HDFS initialized"
 
 # -----------------------------------------------------------------------------
 # Step 4: Initialize Hive Metastore Schema
 # -----------------------------------------------------------------------------
 
 echo ""
+echo "Waiting for PostgreSQL to be ready..."
+
+# Wait for PostgreSQL (critical for schema initialization)
+for i in $(seq 1 20); do
+  if docker exec hive_metastore pg_isready -U hive -d metastore >/dev/null 2>&1; then
+    # PostgreSQL is accepting connections, wait extra time for full initialization
+    # This is critical - PostgreSQL needs time to fully initialize the database
+    echo "PostgreSQL responding, waiting for full initialization..."
+    sleep 15
+    echo "✓ PostgreSQL ready"
+    break
+  fi
+  sleep 2
+done
+
 echo "Checking Hive metastore schema..."
 
 # Check if schema already exists
-SCHEMA_INFO=$(docker exec spark bash -lc 'schematool -dbType postgres -info 2>&1' || true)
+SCHEMA_CHECK=$(docker exec spark bash -c 'schematool -dbType postgres -info 2>&1 | grep "Metastore schema version"' || echo "")
 
-if echo "$SCHEMA_INFO" | grep -q "Metastore schema version:.*4.0.0"; then
-  echo "✓ Hive schema already exists (version 4.0.0)"
+if [ -n "$SCHEMA_CHECK" ]; then
+  echo "✓ Hive schema already exists"
 else
-  echo "Initializing Hive schema (this takes ~30 seconds)..."
-  docker exec spark bash -lc 'schematool -dbType postgres -initSchema' 2>&1 | \
-    grep -E "Initialization script|completed|SUCCESS" || echo "Note: Schema may already exist"
+  echo "Initializing Hive schema (this takes ~20 seconds)..."
+  docker exec spark bash -c 'schematool -dbType postgres -initSchema' >/dev/null 2>&1
+  
+  # Verify initialization succeeded
+  sleep 2
+  SCHEMA_CHECK=$(docker exec spark bash -c 'schematool -dbType postgres -info 2>&1 | grep "Metastore schema version"' || echo "")
+  if [ -n "$SCHEMA_CHECK" ]; then
+    echo "✓ Schema initialized successfully"
+  else
+    echo "⚠ Schema initialization failed, retrying once..."
+    docker exec spark bash -c 'schematool -dbType postgres -initSchema' >/dev/null 2>&1
+    sleep 2
+    SCHEMA_CHECK=$(docker exec spark bash -c 'schematool -dbType postgres -info 2>&1 | grep "Metastore schema version"' || echo "")
+    if [ -n "$SCHEMA_CHECK" ]; then
+      echo "✓ Schema initialized successfully on retry"
+    else
+      echo "✗ Schema initialization failed - Hive may not work properly"
+    fi
+  fi
 fi
 
 # -----------------------------------------------------------------------------
@@ -167,21 +204,82 @@ fi
 
 print_section "Starting Hive Metastore and HiveServer2"
 
-# Start both services in background
-docker exec -d spark bash -lc '
-  hive --service metastore &
-  sleep 15
-  hive --service hiveserver2
-' 2>&1 | grep -v "warning: setlocale" || true
+# Avoid premature exits during service startup waits
+set +e
 
-# Wait for HiveServer2 to be ready (port 10000)
-# Note: Hive 4.0.0 takes 2-3 minutes to fully initialize
-echo ""
-echo "Waiting for HiveServer2 to start (this takes 2-3 minutes)..."
+# Kill any existing Hive processes
+docker exec spark bash -c 'pkill -9 -f "HiveMetaStore|HiveServer2" 2>/dev/null || true'
+sleep 1
 
-wait_for_condition "HiveServer2" \
-  "docker exec spark bash -c 'netstat -tulpn 2>/dev/null | grep -q \":10000 \"'" \
-  180 3
+# Start Metastore reliably
+echo "Starting Hive Metastore..."
+docker exec spark bash -c 'nohup hive --service metastore >/tmp/root/metastore.log 2>&1 & echo $! > /tmp/root/metastore.pid && disown' >/dev/null 2>&1 || true
+
+# Wait for Metastore (port 9083) with hard timeout (~3 min) and log-based readiness
+echo "Waiting for Metastore to start..."
+METASTORE_READY=false
+META_START_TS=$(date +%s)
+for i in $(seq 1 90); do
+  if docker exec spark bash -c 'ss -tulpn 2>/dev/null | grep -q 9083 || grep -q "Starting Hive Metastore Server" /tmp/root/metastore.log 2>/dev/null'; then
+    METASTORE_READY=true; echo "✓ Metastore ready"; break
+  fi
+  NOW=$(date +%s); ELAPSED=$((NOW - META_START_TS))
+  if (( i % 10 == 0 )); then echo "  Still waiting for Metastore... (${ELAPSED}s elapsed)"; fi
+  sleep 2
+done
+if [ "$METASTORE_READY" != true ]; then
+  echo "✗ Metastore did not start in time. Last log lines:"; docker exec spark bash -c 'tail -80 /tmp/root/metastore.log || true'
+  exit 1
+fi
+
+# Start HiveServer2 reliably
+echo "Starting HiveServer2..."
+docker exec spark bash -c 'nohup hive --service hiveserver2 >/tmp/root/hiveserver2.log 2>&1 & echo $! > /tmp/root/hiveserver2.pid && disown' >/dev/null 2>&1 || true
+
+# Wait for HiveServer2 (port 10000) - this takes longer (min 180s visible wait, max 600s)
+echo "Waiting for HiveServer2 to start (up to 3 minutes)..."
+HS2_READY=false
+HS2_START_TS=$(date +%s)
+HS2_PORT_SEEN=false
+MAX_WAIT_SEC=600
+while :; do
+  if docker exec spark bash -c 'ss -tulpn 2>/dev/null | grep -q 10000 || grep -q "Starting ThriftBinaryCLIService on port" /tmp/root/hive*.log 2>/dev/null || grep -q "Service:HiveServer2 is started" /tmp/root/hive*.log 2>/dev/null'; then
+    HS2_PORT_SEEN=true
+  fi
+  NOW=$(date +%s); ELAPSED=$((NOW - HS2_START_TS))
+  if [ "$HS2_PORT_SEEN" = true ] && [ $ELAPSED -ge 180 ]; then
+    HS2_READY=true; echo "✓ HiveServer2 ready"; break
+  fi
+  if [ $ELAPSED -ge $MAX_WAIT_SEC ]; then
+    break
+  fi
+  if (( (ELAPSED % 10) == 0 )); then echo "  Still waiting... (${ELAPSED}s elapsed)"; fi
+  sleep 2
+done
+if [ "$HS2_READY" != true ]; then
+  echo "✗ HiveServer2 did not start in time. Last log lines:"; docker exec spark bash -c 'tail -80 /tmp/root/hiveserver2.log || true'
+  exit 1
+fi
+
+# Extra: wait for JDBC readiness (SQL query responds)
+echo "Waiting for HiveServer2 JDBC to become responsive..."
+JDBC_READY=false
+JDBC_START_TS=$(date +%s)
+for i in $(seq 1 180); do
+  if docker exec spark bash -c 'beeline -u jdbc:hive2://localhost:10000 -e "show databases;" >/dev/null 2>&1'; then
+    JDBC_READY=true; echo "✓ HiveServer2 JDBC ready"; break
+  fi
+  NOW=$(date +%s); ELAPSED=$((NOW - JDBC_START_TS))
+  if (( i % 10 == 0 )); then echo "  Still waiting for JDBC... (${ELAPSED}s elapsed)"; fi
+  sleep 2
+done
+if [ "$JDBC_READY" != true ]; then
+  echo "✗ HiveServer2 JDBC not responsive in time. Last HS2 log lines:"; docker exec spark bash -c 'tail -80 /tmp/root/hiveserver2.log || true'
+  exit 1
+fi
+
+# Re-enable strict mode for health checks
+set -e
 
 # -----------------------------------------------------------------------------
 # Validate All Services Before Completion
@@ -223,7 +321,7 @@ fi
 
 # Test 3: Hive Metastore
 echo "  Testing Hive Metastore..."
-if docker exec spark bash -c 'netstat -tulpn 2>/dev/null | grep -q ":9083"'; then
+if docker exec spark bash -c 'ss -tulpn 2>/dev/null | grep -q ":9083"'; then
   echo "    ✓ Hive Metastore is working"
 else
   echo "    ✗ Hive Metastore not running"
@@ -231,13 +329,13 @@ else
   if [ -n "$METASTORE_PROCESS" ]; then
     ERRORS+=("Hive Metastore: Process running but port 9083 not listening (still initializing?)")
   else
-    ERRORS+=("Hive Metastore: Process not running - check logs with: docker exec spark tail -50 /tmp/root/hive.log")
+    ERRORS+=("Hive Metastore: Process not running - check logs: docker exec spark tail -50 /tmp/root/metastore.log")
   fi
 fi
 
 # Test 4: HiveServer2
 echo "  Testing HiveServer2..."
-if docker exec spark bash -c 'netstat -tulpn 2>/dev/null | grep -q ":10000"'; then
+if docker exec spark bash -c 'ss -tulpn 2>/dev/null | grep -q ":10000"'; then
   echo "    ✓ HiveServer2 is working"
 else
   echo "    ✗ HiveServer2 not running"
@@ -245,7 +343,7 @@ else
   if [ -n "$HIVESERVER_PROCESS" ]; then
     ERRORS+=("HiveServer2: Process running but port 10000 not listening (still initializing?)")
   else
-    ERRORS+=("HiveServer2: Process not running - check logs with: docker exec spark tail -50 /tmp/root/hive.log")
+    ERRORS+=("HiveServer2: Process not running - check logs: docker exec spark tail -50 /tmp/root/hiveserver2.log")
   fi
 fi
 
@@ -289,10 +387,14 @@ else
   echo ""
   echo "  2. Check logs:"
   echo "     docker logs spark"
-  echo "     docker exec spark tail -50 /tmp/root/hive.log"
+  echo "     docker exec spark tail -50 /tmp/root/metastore.log"
+  echo "     docker exec spark tail -50 /tmp/root/hiveserver2.log"
   echo ""
-  echo "  3. Restart services:"
-  echo "     docker-compose restart"
+  echo "  3. Reinitialize Hive schema:"
+  echo "     docker exec spark schematool -dbType postgres -initSchema"
+  echo ""
+  echo "  4. Restart everything:"
+  echo "     docker-compose down && ./setup-spark.sh --build --run"
   echo ""
   echo "============================================================"
   exit 1

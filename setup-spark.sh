@@ -179,14 +179,62 @@ docker exec -d spark bash -lc '
 echo ""
 echo "Waiting for HiveServer2 to start (this takes 2-3 minutes)..."
 
-if wait_for_condition "HiveServer2" \
+wait_for_condition "HiveServer2" \
   "docker exec spark bash -c 'netstat -tulpn 2>/dev/null | grep -q \":10000 \"'" \
-  180 3; then
-  
-  # -----------------------------------------------------------------------------
-  # Setup Complete - All services are ready
-  # -----------------------------------------------------------------------------
-  
+  180 3
+
+# -----------------------------------------------------------------------------
+# Validate All Services Before Completion
+# -----------------------------------------------------------------------------
+
+echo ""
+echo "Running final health checks..."
+
+# Initialize error tracking
+ERRORS=()
+
+# Test 1: HDFS
+echo "  Testing HDFS..."
+if docker exec spark bash -c 'hdfs dfs -ls / >/dev/null 2>&1'; then
+  echo "    ✓ HDFS is working"
+else
+  echo "    ✗ HDFS test failed"
+  ERRORS+=("HDFS: Cannot list root directory")
+fi
+
+# Test 2: Spark
+echo "  Testing Spark..."
+if docker exec spark bash -c 'spark-shell --version 2>&1 | grep -q "version 3.5.7"'; then
+  echo "    ✓ Spark is working"
+else
+  echo "    ✗ Spark test failed"
+  ERRORS+=("Spark: Version check failed")
+fi
+
+# Test 3: Hive Metastore
+echo "  Testing Hive Metastore..."
+if docker exec spark bash -c 'netstat -tulpn 2>/dev/null | grep -q ":9083"'; then
+  echo "    ✓ Hive Metastore is working"
+else
+  echo "    ✗ Hive Metastore not running"
+  ERRORS+=("Hive Metastore: Port 9083 not listening")
+fi
+
+# Test 4: HiveServer2
+echo "  Testing HiveServer2..."
+if docker exec spark bash -c 'netstat -tulpn 2>/dev/null | grep -q ":10000"'; then
+  echo "    ✓ HiveServer2 is working"
+else
+  echo "    ✗ HiveServer2 not running"
+  ERRORS+=("HiveServer2: Port 10000 not listening")
+fi
+
+# -----------------------------------------------------------------------------
+# Show Results
+# -----------------------------------------------------------------------------
+
+if [ ${#ERRORS[@]} -eq 0 ]; then
+  # All tests passed - show success message
   echo ""
   echo "============================================================"
   echo "[+] Spark with Hadoop setup completed successfully !"
@@ -204,24 +252,28 @@ if wait_for_condition "HiveServer2" \
   echo ""
   echo "============================================================"
 else
-  # HiveServer2 failed to start within timeout
+  # Some tests failed - show error message
   echo ""
   echo "============================================================"
-  echo "⚠ Setup incomplete - HiveServer2 did not start in time"
+  echo "⚠ Setup incomplete - Some services failed health checks"
   echo "============================================================"
   echo ""
-  echo "Troubleshooting steps:"
-  echo "  1. Check HiveServer2 status:"
-  echo "     docker exec spark ps aux | grep hive"
+  echo "Failed services:"
+  for error in "${ERRORS[@]}"; do
+    echo "  ✗ $error"
+  done
   echo ""
-  echo "  2. Check HiveServer2 logs:"
-  echo "     docker exec spark tail -100 /tmp/root/hive.log"
+  echo "Troubleshooting:"
+  echo "  1. Check all services:"
+  echo "     docker exec spark ps aux | grep -E 'java|hdfs'"
   echo ""
-  echo "  3. Wait a few more minutes and test manually:"
-  echo "     docker exec spark beeline -u \"jdbc:hive2://localhost:10000\" -n root -e \"show databases;\""
+  echo "  2. Check logs:"
+  echo "     docker logs spark"
+  echo "     docker exec spark tail -50 /tmp/root/hive.log"
   echo ""
-  echo "Other services (Spark, HDFS) are available:"
-  echo "  docker exec -it spark bash"
+  echo "  3. Restart services:"
+  echo "     docker-compose restart"
+  echo ""
   echo "============================================================"
   exit 1
 fi

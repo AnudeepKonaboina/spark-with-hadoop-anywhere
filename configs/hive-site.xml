@@ -46,5 +46,10 @@
   <property>
 	 <name>hive.security.authorization.enabled</name>
 	 <value>false</value>
-  </property>  
+  </property>
+  <property>
+    <name>metastore.metastore.event.db.notification.api.auth</name>
+    <value>false</value>
+    <description>Disable metastore notification event authorization (Hive 4.0.0)</description>
+  </property>
 </configuration>

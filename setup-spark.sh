@@ -127,8 +127,14 @@ docker exec spark bash -lc '
 ' 2>&1 | grep -v -e "warning: setlocale" -e "namenode is running" -e "Stop it first" -e ".pid file is empty" || true
 
 # Initialize Hive metastore schema (required for Hive 4.0.0)
-echo "Initializing Hive metastore schema..."
-docker exec spark bash -lc 'schematool -dbType postgres -initSchema' 2>&1 | grep -E "Initialization script|completed|SUCCESS|FAILED" || true
+echo "Checking Hive metastore schema..."
+SCHEMA_INFO=$(docker exec spark bash -lc 'schematool -dbType postgres -info 2>&1' || true)
+if echo "$SCHEMA_INFO" | grep -q "Metastore schema version:.*4.0.0"; then
+  echo "✓ Hive schema already initialized (version 4.0.0)"
+else
+  echo "Initializing Hive metastore schema..."
+  docker exec spark bash -lc 'schematool -dbType postgres -initSchema' 2>&1 | grep -E "Initialization script|completed|SUCCESS" || echo "Note: Schema may already exist"
+fi
 
 # Start Hive Metastore (background) then HiveServer2 (silently)
 docker exec -d spark bash -lc '

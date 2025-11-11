@@ -5,7 +5,7 @@
 [![Spark](https://img.shields.io/badge/Spark-3.5.0-E25A1C?logo=apachespark&logoColor=white)](https://spark.apache.org/releases/spark-release-3-5-0.html)
 [![Hadoop](https://img.shields.io/badge/Hadoop-3.3.6-66CCFF?logo=apachehadoop&logoColor=white)](https://hadoop.apache.org/release/3.3.6.html)
 [![Hive](https://img.shields.io/badge/Hive-3.1.3-FDEE21?logo=apachehive&logoColor=black)](https://hive.apache.org/downloads.html)
-[![Scala](https://img.shields.io/badge/Scala-2.12.10-DC322F?logo=scala&logoColor=white)](https://www.scala-lang.org/download/2.12.10.html)
+[![Scala](https://img.shields.io/badge/Scala-2.12.18-DC322F?logo=scala&logoColor=white)](https://www.scala-lang.org/download/2.12.18.html)
 [![CentOS](https://img.shields.io/badge/CentOS-7-262577?logo=centos&logoColor=white)](https://wiki.centos.org/Manuals/ReleaseNotes/CentOS7)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-11.12-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/docs/11/release-11-12.html)
 
@@ -108,7 +108,7 @@ If you used **`--run`** option (pulled from DockerHub), you'll see:
 ```commandline
 anudeep.k@SHELL% docker images
 REPOSITORY                     TAG                                    IMAGE ID       CREATED             SIZE
-docker4ops/spark-with-hadoop   spark-3.1.1_hadoop-3.2.0_hive-3.1.1    4c69c4d0041d   About an hour ago   4.24GB
+docker4ops/spark-with-hadoop   spark-3.5.0_hadoop-3.3.6_hive-3.1.3    4c69c4d0041d   About an hour ago   4.24GB
 docker4ops/hive-metastore      hive-3.1.1                             31287c798b1d   About an hour ago   286MB
 ```
 
@@ -147,15 +147,15 @@ docker exec -it spark bash
 [root@hadoop /]# hive
 which: no hbase in (/usr/bin/apache-hive-3.1.3-bin/bin:/usr/bin/spark-3.5.0-bin-without-hadoop/bin:/usr/bin/spark-3.5.0-bin-without-hadoop/sbin:/usr/lib/jvm/jre-1.8.0-openjdk/bin:/usr/bin/hadoop-3.3.6/bin:/usr/bin/hadoop-3.3.6/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin)
 SLF4J: Class path contains multiple SLF4J bindings.
-SLF4J: Found binding in [jar:file:/usr/bin/apache-hive-3.1.3-bin/lib/log4j-slf4j-impl-2.10.0.jar!/org/slf4j/impl/StaticLoggerBinder.class]
-SLF4J: Found binding in [jar:file:/usr/bin/hadoop-3.3.6/share/hadoop/common/lib/slf4j-log4j12-1.7.25.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/usr/bin/apache-hive-3.1.3-bin/lib/log4j-slf4j-impl-2.17.1.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/usr/bin/hadoop-3.3.6/share/hadoop/common/lib/slf4j-reload4j-1.7.36.jar!/org/slf4j/impl/StaticLoggerBinder.class]
 SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
 SLF4J: Actual binding is of type [org.apache.logging.slf4j.Log4jLoggerFactory]
-Hive Session ID = 132d2bc5-56c9-43f6-88b3-199aa3c72c97
+Hive Session ID = 2214d134-09cb-4f46-8934-1a84d0483350
 
-Logging initialized using configuration in jar:file:/usr/bin/apache-hive-3.1.3-bin/lib/hive-common-3.1.1.jar!/hive-log4j2.properties Async: true
-Hive Session ID = 37366fc9-c629-42e9-9677-a9ac6caf4137
+Logging initialized using configuration in jar:file:/usr/bin/apache-hive-3.1.3-bin/lib/hive-common-3.1.3.jar!/hive-log4j2.properties Async: true
 Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
+Hive Session ID = cbe43002-acd9-4091-8a96-2478b52a5af5
 hive>
 ```
 
@@ -172,23 +172,19 @@ drwxr-xr-x   - root supergroup          0 2025-11-10 15:17 /user
 #### To run spark shell within container:
 ```commandline
 [root@hadoop /]# spark-shell
-2025-11-10 13:55:26,694 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
-Setting default log level to "WARN".
-To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
 Spark context Web UI available at http://hadoop.spark:4040
-Spark context available as 'sc' (master = local[*], app id = local-1762782928691).
+Spark context available as 'sc' (master = local[*], app id = local-1762876357718).
 Spark session available as 'spark'.
 Welcome to
       ____              __
      / __/__  ___ _____/ /__
     _\ \/ _ \/ _ `/ __/  '_/
-   /___/ .__/_\_,_/_/ /_/\_\   version 3.5.0
+   /___/ .__/\_,_/_/ /_/\_\   version 3.5.0
       /_/
          
-Using Scala version 2.12.10 (OpenJDK 64-Bit Server VM, Java 1.8.0_412)
+Using Scala version 2.12.18 (OpenJDK 64-Bit Server VM, Java 1.8.0_412)
 Type in expressions to have them evaluated.
-Type :help for more information.
-
+Type :help for more information
 scala>
 ```
 

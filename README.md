@@ -1,7 +1,7 @@
 # Setup Spark with Hadoop on Docker
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/44436c70bdcf427abd4b2d60ef3900f2)](https://app.codacy.com/gh/AnudeepKonaboina/spark-with-hadoop-anywhere/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![CodeFactor](https://www.codefactor.io/repository/github/anudeepkonaboina/spark-with-hadoop-anywhere/badge/spark-3.5.7)](https://www.codefactor.io/repository/github/anudeepkonaboina/spark-with-hadoop-anywhere/overview/spark-3.5.7)
+
 
 [![Spark](https://img.shields.io/badge/Spark-3.5.7-E25A1C?logo=apachespark&logoColor=white)](https://spark.apache.org/releases/spark-release-3-5-7.html)
 [![Hadoop](https://img.shields.io/badge/Hadoop-3.3.6-66CCFF?logo=apachehadoop&logoColor=white)](https://hadoop.apache.org/release/3.3.6.html)
@@ -147,23 +147,6 @@ docker exec -it spark bash
 
 # How to use it
 
-#### To run hive inside container:
-```commandline
-[root@hadoop /]# hive
-which: no hbase in (/usr/bin/apache-hive-4.0.0-bin/bin:/usr/bin/spark-3.5.7-bin-hadoop3-scala2.13/bin:/usr/bin/spark-3.5.7-bin-hadoop3-scala2.13/sbin:/usr/lib/jvm/java-17-openjdk/bin:/usr/bin/hadoop-3.3.6/bin:/usr/bin/hadoop-3.3.6/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin)
-SLF4J: Class path contains multiple SLF4J bindings.
-SLF4J: Found binding in [jar:file:/usr/bin/apache-hive-4.0.0-bin/lib/log4j-slf4j-impl-2.17.1.jar!/org/slf4j/impl/StaticLoggerBinder.class]
-SLF4J: Found binding in [jar:file:/usr/bin/hadoop-3.3.6/share/hadoop/common/lib/slf4j-log4j12-1.7.25.jar!/org/slf4j/impl/StaticLoggerBinder.class]
-SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
-SLF4J: Actual binding is of type [org.apache.logging.slf4j.Log4jLoggerFactory]
-Hive Session ID = f05dd6b8-3de1-4687-bb96-295203228330
-
-Logging initialized using configuration in jar:file:/usr/bin/apache-hive-4.0.0-bin/lib/hive-common-4.0.0.jar!/hive-log4j2.properties Async: true
-Hive Session ID = 584bf0da-49b8-4b67-995c-f693aeb48706
-Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
-hive> 
-```
-
 #### To run hdfs commands within container:
 ```commandline
 [root@hadoop /]# hdfs dfs -ls /
@@ -199,7 +182,7 @@ scala>
 
 #### To run hive using beeline:
 ```commandline
-[root@hadoop /]# beeline
+[root@hadoop /]#  beeline -u jdbc:hive2://localhost:10000
 SLF4J: Class path contains multiple SLF4J bindings.
 SLF4J: Found binding in [jar:file:/usr/bin/apache-hive-4.0.0-bin/lib/log4j-slf4j-impl-2.17.1.jar!/org/slf4j/impl/StaticLoggerBinder.class]
 SLF4J: Found binding in [jar:file:/usr/bin/hadoop-3.3.6/share/hadoop/common/lib/slf4j-log4j12-1.7.25.jar!/org/slf4j/impl/StaticLoggerBinder.class]
@@ -217,6 +200,41 @@ Connected to: Apache Hive (version 4.0.0)
 Driver: Hive JDBC (version 4.0.0)
 Transaction isolation: TRANSACTION_REPEATABLE_READ
 0: jdbc:hive2://>
+```
+
+
+# Clean-up commands:
+
+Once your testing is completed ,its time to clean up your containers. Use the below steps for cleanup
+
+1. Run **`docker-compose down`** to clean stop all the running containers
+````
+anudeep.k@SHELL spark-with-hadoop-anywhere % docker-compose down
+[+] Running 3/3
+ ✔ Container spark                             Removed                                                                                               10.4s 
+ ✔ Container hive_metastore                    Removed                                                                                                0.1s 
+ ✔ Network spark-with-hadoop-anywhere_default  Removed
+````
+
+2. Run the command **`docker rmi -f $(docker images -a -q)`** to remove all the images you pulled. You can also run `docker system prune` to do a disk cleanup and reclaim space
+
+```aiignore
+anudeep.k@SHELL spark-with-hadoop-anywhere % docker rmi -f $(docker images -a -q)
+Untagged: docker4ops/spark-with-hadoop:spark-2.4.7_hadoop-2.10.1_hive-2.1.1
+Deleted: sha256:4c69c4d0041d625f1f6d16649c56517db565bc429dca8320fc1c86082d33bc5e
+Untagged: docker4ops/hive-metastore:hive-2.1.1
+Deleted: sha256:31287c798b1de021668fce9370994ae3b8a7f78e9e3d05cbef7816a0db629e78
+
+anudeep.k@SHELL spark-with-hadoop-anywhere % docker system prune                 
+WARNING! This will remove:
+  - all stopped containers
+  - all networks not used by at least one container
+  - all dangling images
+  - unused build cache
+
+Are you sure you want to continue? [y/N] y
+Total reclaimed space: 0B
+
 ```
 
 

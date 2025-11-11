@@ -2,9 +2,9 @@
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/44436c70bdcf427abd4b2d60ef3900f2)](https://app.codacy.com/gh/AnudeepKonaboina/spark-with-hadoop-anywhere/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
-[![Spark](https://img.shields.io/badge/Spark-3.1.1-E25A1C?logo=apachespark&logoColor=white)](https://spark.apache.org/releases/spark-release-3-1-1.html)
-[![Hadoop](https://img.shields.io/badge/Hadoop-3.2.0-66CCFF?logo=apachehadoop&logoColor=white)](https://hadoop.apache.org/release/3.2.0.html)
-[![Hive](https://img.shields.io/badge/Hive-3.1.1-FDEE21?logo=apachehive&logoColor=black)](https://hive.apache.org/downloads.html)
+[![Spark](https://img.shields.io/badge/Spark-3.5.0-E25A1C?logo=apachespark&logoColor=white)](https://spark.apache.org/releases/spark-release-3-5-0.html)
+[![Hadoop](https://img.shields.io/badge/Hadoop-3.3.6-66CCFF?logo=apachehadoop&logoColor=white)](https://hadoop.apache.org/release/3.3.6.html)
+[![Hive](https://img.shields.io/badge/Hive-3.1.3-FDEE21?logo=apachehive&logoColor=black)](https://hive.apache.org/downloads.html)
 [![Scala](https://img.shields.io/badge/Scala-2.12.10-DC322F?logo=scala&logoColor=white)](https://www.scala-lang.org/download/2.12.10.html)
 [![CentOS](https://img.shields.io/badge/CentOS-7-262577?logo=centos&logoColor=white)](https://wiki.centos.org/Manuals/ReleaseNotes/CentOS7)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-11.12-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/docs/11/release-11-12.html)
@@ -49,9 +49,9 @@ docker run hello-world
 
 | Service      | Version     |
 | -----------  | ----------- |
-| Spark        | 3.1.1       |
-| Hadoop       | 3.2.0       |
-| Hive         | 3.1.1       |
+| Spark        | 3.5.0       |
+| Hadoop       | 3.3.6       |
+| Hive         | 3.1.3       |
 
 
 
@@ -59,7 +59,7 @@ docker run hello-world
 # Steps to setup
 1. Clone the project and navigate to the main directory
 ```commandline
-git clone -b spark-3.1.1 https://github.com/AnudeepKonaboina/spark-with-hadoop-anywhere.git && cd spark-with-hadoop-anywhere/
+git clone -b spark-3.5.0 https://github.com/AnudeepKonaboina/spark-with-hadoop-anywhere.git && cd spark-with-hadoop-anywhere/
 ```
 
 2. Create the secrets password file (used by Postgres/Hive)
@@ -145,15 +145,15 @@ docker exec -it spark bash
 #### To run hive inside container:
 ```commandline
 [root@hadoop /]# hive
-which: no hbase in (/usr/bin/apache-hive-3.1.1-bin/bin:/usr/bin/spark-3.1.1-bin-without-hadoop/bin:/usr/bin/spark-3.1.1-bin-without-hadoop/sbin:/usr/lib/jvm/jre-1.8.0-openjdk/bin:/usr/bin/hadoop-3.2.0/bin:/usr/bin/hadoop-3.2.0/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin)
+which: no hbase in (/usr/bin/apache-hive-3.1.3-bin/bin:/usr/bin/spark-3.5.0-bin-without-hadoop/bin:/usr/bin/spark-3.5.0-bin-without-hadoop/sbin:/usr/lib/jvm/jre-1.8.0-openjdk/bin:/usr/bin/hadoop-3.3.6/bin:/usr/bin/hadoop-3.3.6/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin)
 SLF4J: Class path contains multiple SLF4J bindings.
-SLF4J: Found binding in [jar:file:/usr/bin/apache-hive-3.1.1-bin/lib/log4j-slf4j-impl-2.10.0.jar!/org/slf4j/impl/StaticLoggerBinder.class]
-SLF4J: Found binding in [jar:file:/usr/bin/hadoop-3.2.0/share/hadoop/common/lib/slf4j-log4j12-1.7.25.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/usr/bin/apache-hive-3.1.3-bin/lib/log4j-slf4j-impl-2.10.0.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/usr/bin/hadoop-3.3.6/share/hadoop/common/lib/slf4j-log4j12-1.7.25.jar!/org/slf4j/impl/StaticLoggerBinder.class]
 SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
 SLF4J: Actual binding is of type [org.apache.logging.slf4j.Log4jLoggerFactory]
 Hive Session ID = 132d2bc5-56c9-43f6-88b3-199aa3c72c97
 
-Logging initialized using configuration in jar:file:/usr/bin/apache-hive-3.1.1-bin/lib/hive-common-3.1.1.jar!/hive-log4j2.properties Async: true
+Logging initialized using configuration in jar:file:/usr/bin/apache-hive-3.1.3-bin/lib/hive-common-3.1.1.jar!/hive-log4j2.properties Async: true
 Hive Session ID = 37366fc9-c629-42e9-9677-a9ac6caf4137
 Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
 hive>
@@ -182,7 +182,7 @@ Welcome to
       ____              __
      / __/__  ___ _____/ /__
     _\ \/ _ \/ _ `/ __/  '_/
-   /___/ .__/\_,_/_/ /_/\_\   version 3.1.1
+   /___/ .__/_\_,_/_/ /_/\_\   version 3.5.0
       /_/
          
 Using Scala version 2.12.10 (OpenJDK 64-Bit Server VM, Java 1.8.0_412)

@@ -68,14 +68,14 @@ else
   echo "Pulling images from Docker Hub..."
   echo "=================================================="
   
-  docker pull docker4ops/hive-metastore:hive-3.1.1
-  docker pull docker4ops/spark-with-hadoop:spark-3.1.1_hadoop-3.2.0_hive-3.1.1
+  docker pull docker4ops/hive-metastore:hive-3.1.3
+  docker pull docker4ops/spark-with-hadoop:spark-3.5.0_hadoop-3.3.6_hive-3.1.3
   
   echo "Pull complete!"
   
   # Set environment variables to use Docker Hub images (default)
-  export HIVE_METASTORE_IMAGE="docker4ops/hive-metastore:hive-3.1.1"
-  export SPARK_HADOOP_IMAGE="docker4ops/spark-with-hadoop:spark-3.1.1_hadoop-3.2.0_hive-3.1.1"
+  export HIVE_METASTORE_IMAGE="docker4ops/hive-metastore:hive-3.1.3"
+  export SPARK_HADOOP_IMAGE="docker4ops/spark-with-hadoop:spark-3.5.0_hadoop-3.3.6_hive-3.1.3"
 fi
 
 

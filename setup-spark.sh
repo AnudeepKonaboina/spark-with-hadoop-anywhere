@@ -271,7 +271,7 @@ for i in $(seq 1 180); do
   fi
   NOW=$(date +%s); ELAPSED=$((NOW - JDBC_START_TS))
   if (( i % 10 == 0 )); then echo "  Still waiting for JDBC... (${ELAPSED}s elapsed)"; fi
-  sleep 2
+  sleep 5
 done
 if [ "$JDBC_READY" != true ]; then
   echo "✗ HiveServer2 JDBC not responsive in time. Last HS2 log lines:"; docker exec spark bash -c 'tail -80 /tmp/root/hiveserver2.log || true'

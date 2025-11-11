@@ -113,6 +113,10 @@ docker exec -d spark bash -lc '
   hive --service hiveserver2
 ' 2>&1 | grep -v "warning: setlocale" || true
 
+# Simple Hive test after 15 seconds
+echo "Waiting 15 seconds, then testing Hive..."
+docker exec spark bash -lc 'sleep 15 && hive -e "show databases;"' 2>&1 | grep -v "warning: setlocale" || true
+
 echo ""
 echo "============================================================"
 echo "[+] Spark with Hadoop setup completed successfully !"

@@ -5,8 +5,9 @@
 
 [![Spark](https://img.shields.io/badge/Spark-3.5.7-E25A1C?logo=apachespark&logoColor=white)](https://spark.apache.org/releases/spark-release-3-5-7.html)
 [![Hadoop](https://img.shields.io/badge/Hadoop-3.3.6-66CCFF?logo=apachehadoop&logoColor=white)](https://hadoop.apache.org/release/3.3.6.html)
-[![Hive](https://img.shields.io/badge/Hive-3.1.3-FDEE21?logo=apachehive&logoColor=black)](https://hive.apache.org/downloads.html)
-[![Scala](https://img.shields.io/badge/Scala-2.11.12-DC322F?logo=scala&logoColor=white)](https://www.scala-lang.org/download/2.11.12.html)
+[![Hive](https://img.shields.io/badge/Hive-4.0.0-FDEE21?logo=apachehive&logoColor=black)](https://hive.apache.org/downloads.html)
+[![Scala](https://img.shields.io/badge/Scala-2.13.14-DC322F?logo=scala&logoColor=white)](https://www.scala-lang.org/download/2.13.14.html)
+[![Java](https://img.shields.io/badge/Java-17-007396?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/17/)
 [![CentOS](https://img.shields.io/badge/CentOS-7-262577?logo=centos&logoColor=white)](https://wiki.centos.org/Manuals/ReleaseNotes/CentOS7)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-11.12-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/docs/11/release-11-12.html)
 
@@ -51,13 +52,13 @@ docker run hello-world
 | -----------  | ----------- |
 | Spark        | 3.5.7       |
 | Hadoop       | 3.3.6       |
-| Hive         | 3.1.3       |
+| Hive         | 4.0.0       |
 
 
 
 
-# Setps to setup
-1. Clone the project abd navigate to the main directory
+# Steps to setup
+1. Clone the project and navigate to the main directory
 ```commandline
 git clone -b spark-3.5.7 https://github.com/AnudeepKonaboina/spark-with-hadoop-anywhere.git && cd spark-with-hadoop-anywhere/
 ```
@@ -68,16 +69,69 @@ mkdir -p secrets
 echo "your-strong-password" > secrets/postgres_password.txt
 ```
 
-3. Run the script file
-```commandline
-sh setup-spark.sh
+3. Run the setup script
+
+There are two ways to start the setup script
+
+```bash
+# Quick setup - Pull pre-built images from DockerHub
+./setup-spark.sh --run
+
+# Build from source - Build images locally and run
+./setup-spark.sh --build --run
 ```
 
-4. After the setup is completed you will have two containers started as shown below
+**Arguments:**
+- `--run` : Pull images from DockerHub and run (quick setup)
+- `--build --run` : Build images locally from Dockerfiles and run
+   **Note:** The `--build` flag must always be used with `--run `.
+
+
+**Option 1: Quick Setup (Pull images from DockerHub)**
 ```commandline
-CONTAINER ID   IMAGE                           COMMAND                  CREATED       STATUS       PORTS                                                                                                                                                                                                  NAMES
-bd27eb6ee76a   spark-with-hadoop-hive:latest   "/usr/local/bin/star…"   4 hours ago   Up 4 hours   0.0.0.0:4040-4041->4040-4041/tcp, [::]:4040-4041->4040-4041/tcp, 0.0.0.0:2222->22/tcp, [::]:2222->22/tcp, 0.0.0.0:8089->8088/tcp, [::]:8089->8088/tcp, 0.0.0.0:8090->18080/tcp, [::]:8090->18080/tcp   spark
-28bec05777e6   hive-metastore:latest           "docker-entrypoint.s…"   4 hours ago   Up 4 hours   5432/tcp                                                                                                                                                                                               hive_metastore
+sh setup-spark.sh --run
+```
+This will:
+- Pull pre-built images from Docker Hub
+- Start the services
+- Initialize HDFS and Hive
+- Quick and easy setup - recommended for most users
+
+**Option 2: Build images locally using Dockerfiles**
+```commandline
+sh setup-spark.sh --build --run
+```
+This will:
+- Build Docker images locally from source
+- Use the locally built images
+- Start the services
+- Initialize HDFS and Hive
+- Useful if you need to customize the Dockerfiles
+
+4. After the setup is completed you will have two containers started
+
+If you used **`--run`** (pulled from DockerHub), you'll see:
+```commandline
+anudeep.k@SHELL% docker images
+REPOSITORY                     TAG                                    IMAGE ID       CREATED             SIZE
+docker4ops/spark-with-hadoop   spark-3.5.7_hadoop-3.3.6_hive-4.0.0    4c69c4d0041d   About an hour ago   4.24GB
+docker4ops/hive-metastore      hive-4.0.0                             31287c798b1d   About an hour ago   286MB
+```
+
+If you used **`--build --run`** (built locally), you'll see:
+```commandline
+anudeep.k@SHELL% docker images
+REPOSITORY                     TAG                                    IMAGE ID       CREATED             SIZE
+spark-with-hadoop              local                                  4c69c4d0041d   About an hour ago   4.24GB
+hive-metastore                 local                                  31287c798b1d   About an hour ago   286MB
+```
+
+Containers running as shown below
+```commandline
+CONTAINER ID   IMAGE                     COMMAND                  CREATED         STATUS         PORTS                                                                                                                                                                                                          NAMES
+1af5afd31789   spark-with-hadoop:local   "/usr/local/bin/star…"   3 minutes ago   Up 3 minutes   23/tcp, 0.0.0.0:4040-4041->4040-4041/tcp, [::]:4040-4041->4040-4041/tcp, 0.0.0.0:2222->22/tcp, [::]:2222->22/tcp, 0.0.0.0:8089->8088/tcp, [::]:8089->8088/tcp, 0.0.0.0:8090->18080/tcp, [::]:8090->18080/tcp   spark
+c8c3e725a73c   hive-metastore:local      "docker-entrypoint.s…"   3 minutes ago   Up 3 minutes   5432/tcp                                                                                                                                                                                                       hive_metastore
+
 ```
 
 5. SSH into the spark container using the command
@@ -96,17 +150,18 @@ docker exec -it spark bash
 #### To run hive inside container:
 ```commandline
 [root@hadoop /]# hive
-which: no hbase in (/usr/bin/apache-hive-3.1.1-bin/bin:/usr/bin/spark-3.1.1-bin-without-hadoop/bin:/usr/bin/spark-3.1.1-bin-without-hadoop/sbin:/usr/bin/hadoop-3.2.0/bin:/usr/bin/hadoop-3.2.0/sbin:/usr/lib/jvm/java-1.8.0-openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin)
+which: no hbase in (/usr/bin/apache-hive-4.0.0-bin/bin:/usr/bin/spark-3.5.7-bin-hadoop3-scala2.13/bin:/usr/bin/spark-3.5.7-bin-hadoop3-scala2.13/sbin:/usr/lib/jvm/java-17-openjdk/bin:/usr/bin/hadoop-3.3.6/bin:/usr/bin/hadoop-3.3.6/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin)
 SLF4J: Class path contains multiple SLF4J bindings.
-SLF4J: Found binding in [jar:file:/usr/bin/apache-hive-3.1.1-bin/lib/log4j-slf4j-impl-2.10.0.jar!/org/slf4j/impl/StaticLoggerBinder.class]
-SLF4J: Found binding in [jar:file:/usr/bin/hadoop-3.2.0/share/hadoop/common/lib/slf4j-log4j12-1.7.25.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/usr/bin/apache-hive-4.0.0-bin/lib/log4j-slf4j-impl-2.17.1.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/usr/bin/hadoop-3.3.6/share/hadoop/common/lib/slf4j-log4j12-1.7.25.jar!/org/slf4j/impl/StaticLoggerBinder.class]
 SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
 SLF4J: Actual binding is of type [org.apache.logging.slf4j.Log4jLoggerFactory]
+Hive Session ID = f05dd6b8-3de1-4687-bb96-295203228330
 
-Logging initialized using configuration in jar:file:/usr/bin/apache-hive-3.1.1-bin/lib/hive-common-3.1.1.jar!/hive-log4j2.properties Async: true
-Hive Session ID = <id>
+Logging initialized using configuration in jar:file:/usr/bin/apache-hive-4.0.0-bin/lib/hive-common-4.0.0.jar!/hive-log4j2.properties Async: true
+Hive Session ID = 584bf0da-49b8-4b67-995c-f693aeb48706
 Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
-hive>
+hive> 
 ```
 
 #### To run hdfs commands within container:
@@ -122,21 +177,20 @@ drwxr-xr-x   - root supergroup          0 2021-06-02 12:22 /user
 #### To run spark shell within container:
 ```commandline
 [root@hadoop /]# spark-shell
-21/06/23 14:41:04 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
-Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
+2025-11-10 13:55:26,694 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
 Setting default log level to "WARN".
 To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
 Spark context Web UI available at http://hadoop.spark:4040
-Spark context available as 'sc' (master = local[*], app id = local-1622638263693).
+Spark context available as 'sc' (master = local[*], app id = local-1762782928691).
 Spark session available as 'spark'.
 Welcome to
       ____              __
      / __/__  ___ _____/ /__
     _\ \/ _ \/ _ `/ __/  '_/
-   /___/ .__/\_,_/_/ /_/\_\   version 3.1.1
+   /___/ .__/\_,_/_/ /_/\_\   version 3.5.7
       /_/
-
-Using Scala version 2.12.10 (OpenJDK 64-Bit Server VM, Java 1.8.0_275)
+         
+Using Scala version 2.13.14 (OpenJDK 64-Bit Server VM, Java 17.0.9)
 Type in expressions to have them evaluated.
 Type :help for more information.
 
@@ -147,11 +201,11 @@ scala>
 ```commandline
 [root@hadoop /]# beeline
 SLF4J: Class path contains multiple SLF4J bindings.
-SLF4J: Found binding in [jar:file:/usr/bin/apache-hive-3.1.1-bin/lib/log4j-slf4j-impl-2.10.0.jar!/org/slf4j/impl/StaticLoggerBinder.class]
-SLF4J: Found binding in [jar:file:/usr/bin/hadoop-3.2.0/share/hadoop/common/lib/slf4j-log4j12-1.7.25.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/usr/bin/apache-hive-4.0.0-bin/lib/log4j-slf4j-impl-2.17.1.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/usr/bin/hadoop-3.3.6/share/hadoop/common/lib/slf4j-log4j12-1.7.25.jar!/org/slf4j/impl/StaticLoggerBinder.class]
 SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
 SLF4J: Actual binding is of type [org.apache.logging.slf4j.Log4jLoggerFactory]
-Beeline version 3.1.1 by Apache Hive
+Beeline version 4.0.0 by Apache Hive
 beeline> !connect jdbc:hive2://
 Connecting to jdbc:hive2://
 Enter username for jdbc:hive2://: hive
@@ -159,8 +213,8 @@ Enter password for jdbc:hive2://: ****
 21/06/23 16:58:11 [main]: WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
 Hive Session ID = <id>
 21/06/23 16:58:12 [main]: WARN session.SessionState: METASTORE_FILTER_HOOK will be ignored, since hive.security.authorization.manager is set to instance of HiveAuthorizerFactory.
-Connected to: Apache Hive (version 3.1.1)
-Driver: Hive JDBC (version 3.1.1)
+Connected to: Apache Hive (version 4.0.0)
+Driver: Hive JDBC (version 4.0.0)
 Transaction isolation: TRANSACTION_REPEATABLE_READ
 0: jdbc:hive2://>
 ```

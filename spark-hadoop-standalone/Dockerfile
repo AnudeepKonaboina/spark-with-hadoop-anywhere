@@ -115,7 +115,7 @@ ENV HIVE_HOME=/usr/bin/apache-hive-${hive_version}-bin
 ENV PATH=${HIVE_HOME}/bin:${PATH}
 
 # Add Java 17 module opens for Hive compatibility
-ENV HADOOP_OPTS="--add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED"
+ENV HADOOP_OPTS="--add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED"
 
 RUN cp /usr/share/java/postgresql-jdbc.jar ${HIVE_HOME}/lib/ && \
     echo "export HADOOP_HOME=${HADOOP_HOME}" >> ${HADOOP_HOME}/bin/hive-config.sh

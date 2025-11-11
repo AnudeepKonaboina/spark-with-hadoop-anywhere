@@ -1,122 +1,139 @@
 #!/usr/bin/env bash
 
+# =============================================================================
+# Spark with Hadoop Setup Script
+# =============================================================================
+# Description: Sets up Spark 3.5.7 with Hadoop 3.3.6 and Hive 4.0.0
+# Requirements: Docker, Docker Compose
+# 
+# Usage:
+#   ./setup-spark.sh --run              # Pull images from DockerHub
+#   ./setup-spark.sh --build --run      # Build images locally
+#
+# Components:
+#   - Java 17 (Adoptium Temurin)
+#   - Spark 3.5.7 (Scala 2.13)
+#   - Hadoop 3.3.6
+#   - Hive 4.0.0
+#   - PostgreSQL metastore
+# =============================================================================
+
 set -eo pipefail
 
 # -----------------------------------------------------------------------------
-# Parse command line arguments
+# Helper Functions
 # -----------------------------------------------------------------------------
+
+# Wait for a condition with timeout
+wait_for_condition() {
+  local description=$1
+  local command=$2
+  local timeout=$3
+  local interval=${4:-3}
+  
+  echo "Waiting for $description..."
+  local elapsed=0
+  
+  while [ $elapsed -lt $timeout ]; do
+    if eval "$command" 2>/dev/null; then
+      echo "✓ $description ready"
+      return 0
+    fi
+    
+    if [ $((elapsed % 15)) -eq 0 ] && [ $elapsed -gt 0 ]; then
+      echo "  Still waiting... (${elapsed}s/${timeout}s)"
+    fi
+    
+    sleep $interval
+    elapsed=$((elapsed + interval))
+  done
+  
+  echo "⚠ Warning: $description not ready within ${timeout}s"
+  return 1
+}
+
+# Print section header
+print_section() {
+  echo ""
+  echo "=================================================="
+  echo "$1"
+  echo "=================================================="
+}
+
+# -----------------------------------------------------------------------------
+# Parse Arguments
+# -----------------------------------------------------------------------------
+
 BUILD_MODE=false
 RUN_MODE=false
 
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --build)
-      BUILD_MODE=true
-      shift
-      ;;
-    --run)
-      RUN_MODE=true
-      shift
-      ;;
+    --build) BUILD_MODE=true; shift ;;
+    --run) RUN_MODE=true; shift ;;
     *)
-      echo "Unknown option: $1"
+      echo "Error: Unknown option '$1'"
+      echo ""
       echo "Usage: $0 [--build] [--run]"
-      echo "  --run         : Pull images from DockerHub and run..a quick way to setup"
-      echo "  --build --run : Build images locally and run"
+      echo "  --run         : Pull images from DockerHub (fast)"
+      echo "  --build --run : Build images locally (slow, for development)"
       exit 1
       ;;
   esac
 done
 
 # Validate arguments
-if [ "$BUILD_MODE" = false ] && [ "$RUN_MODE" = false ]; then
-  echo "Error: Please specify --run or --build --run"
-  echo "Usage: $0 [--build] [--run]"
-  echo "  --run         : Pull images from Docker Hub and run"
-  echo "  --build --run : Build images locally and run"
+if [ "$RUN_MODE" = false ]; then
+  echo "Error: Please specify --run"
+  echo "Usage: $0 [--build] --run"
   exit 1
 fi
 
 if [ "$BUILD_MODE" = true ] && [ "$RUN_MODE" = false ]; then
-  echo "Error: --build must be used with --run"
-  echo "Usage: $0 --build --run"
+  echo "Error: --build requires --run"
   exit 1
 fi
 
 # -----------------------------------------------------------------------------
-# Build or Pull images
+# Step 1: Build or Pull Docker Images
 # -----------------------------------------------------------------------------
+
 if [ "$BUILD_MODE" = true ]; then
-  echo "=================================================="
-  echo "Building images locally..."
-  echo "=================================================="
+  print_section "Building Docker images locally (this takes 10-15 minutes)"
   
-  # Build with local tag
-  docker build -t hive-metastore:local \
-    -f hive-metastore/Dockerfile .
+  docker build -t hive-metastore:local -f hive-metastore/Dockerfile .
+  docker build -t spark-with-hadoop:local -f spark-hadoop-standalone/Dockerfile .
   
-  docker build -t spark-with-hadoop:local \
-    -f spark-hadoop-standalone/Dockerfile .
-  
-  echo "Build complete!"
-  
-  # Set environment variables to use local images
   export HIVE_METASTORE_IMAGE="hive-metastore:local"
   export SPARK_HADOOP_IMAGE="spark-with-hadoop:local"
 else
-  echo "=================================================="
-  echo "Pulling images from Docker Hub..."
-  echo "=================================================="
+  print_section "Pulling images from DockerHub"
   
   docker pull docker4ops/hive-metastore:hive-4.0.0
   docker pull docker4ops/spark-with-hadoop:spark-3.5.7_hadoop-3.3.6_hive-4.0.0
   
-  echo "Pull complete!"
-  
-  # Set environment variables to use Docker Hub images (default)
   export HIVE_METASTORE_IMAGE="docker4ops/hive-metastore:hive-4.0.0"
   export SPARK_HADOOP_IMAGE="docker4ops/spark-with-hadoop:spark-3.5.7_hadoop-3.3.6_hive-4.0.0"
 fi
 
+# -----------------------------------------------------------------------------
+# Step 2: Start Containers
+# -----------------------------------------------------------------------------
 
-# -----------------------------------------------------------------------------
-# Start services
-# -----------------------------------------------------------------------------
-echo ""
-echo "=================================================="
-echo "Starting services with:"
-echo "  Hive Metastore: $HIVE_METASTORE_IMAGE"
-echo "  Spark Hadoop  : $SPARK_HADOOP_IMAGE"
-echo "=================================================="
+print_section "Starting containers"
 docker-compose up -d
 
-echo ""
-echo "Waiting for containers to be ready..."
+# Wait for containers to be running
+wait_for_condition "containers" \
+  "docker inspect -f '{{.State.Status}}' spark 2>/dev/null | grep -q running && \
+   docker inspect -f '{{.State.Status}}' hive_metastore 2>/dev/null | grep -q running" \
+  30 2
 
-# Poll for containers to be running (max 60 seconds)
-TIMEOUT=15
-ELAPSED=0
-while [ $ELAPSED -lt $TIMEOUT ]; do
-  SPARK_STATUS=$(docker inspect -f '{{.State.Status}}' spark 2>/dev/null || echo "not_found")
-  HIVE_STATUS=$(docker inspect -f '{{.State.Status}}' hive_metastore 2>/dev/null || echo "not_found")
-  
-  if [ "$SPARK_STATUS" = "running" ] && [ "$HIVE_STATUS" = "running" ]; then
-    echo "✓ Containers are running"
-    break
-  fi
-  
-  echo "  Waiting... (${ELAPSED}s/${TIMEOUT}s) [spark: $SPARK_STATUS, hive: $HIVE_STATUS]"
-  sleep 2
-  ELAPSED=$((ELAPSED + 2))
-done
+# -----------------------------------------------------------------------------
+# Step 3: Initialize HDFS
+# -----------------------------------------------------------------------------
 
-if [ $ELAPSED -ge $TIMEOUT ]; then
-  echo "⚠ Warning: Containers did not become ready within ${TIMEOUT}s"
-  echo "Current status:"
-  docker ps -a | grep -E "spark|hive_metastore"
-fi
-
-# Initialize HDFS and Hive warehouse dirs
+print_section "Initializing HDFS"
 docker exec spark bash -lc '
   hdfs namenode -format -force &&
   start-dfs.sh &&
@@ -126,36 +143,82 @@ docker exec spark bash -lc '
   hdfs dfs -chmod g+w /user/hive/warehouse
 ' 2>&1 | grep -v -e "warning: setlocale" -e "namenode is running" -e "Stop it first" -e ".pid file is empty" || true
 
-# Initialize Hive metastore schema (required for Hive 4.0.0)
+# -----------------------------------------------------------------------------
+# Step 4: Initialize Hive Metastore Schema
+# -----------------------------------------------------------------------------
+
+echo ""
 echo "Checking Hive metastore schema..."
+
+# Check if schema already exists
 SCHEMA_INFO=$(docker exec spark bash -lc 'schematool -dbType postgres -info 2>&1' || true)
+
 if echo "$SCHEMA_INFO" | grep -q "Metastore schema version:.*4.0.0"; then
-  echo "✓ Hive schema already initialized (version 4.0.0)"
+  echo "✓ Hive schema already exists (version 4.0.0)"
 else
-  echo "Initializing Hive metastore schema..."
-  docker exec spark bash -lc 'schematool -dbType postgres -initSchema' 2>&1 | grep -E "Initialization script|completed|SUCCESS" || echo "Note: Schema may already exist"
+  echo "Initializing Hive schema (this takes ~30 seconds)..."
+  docker exec spark bash -lc 'schematool -dbType postgres -initSchema' 2>&1 | \
+    grep -E "Initialization script|completed|SUCCESS" || echo "Note: Schema may already exist"
 fi
 
-# Start Hive Metastore (background) then HiveServer2 (silently)
+# -----------------------------------------------------------------------------
+# Step 5: Start Hive Services
+# -----------------------------------------------------------------------------
+
+print_section "Starting Hive Metastore and HiveServer2"
+
+# Start both services in background
 docker exec -d spark bash -lc '
   hive --service metastore &
   sleep 15
   hive --service hiveserver2
 ' 2>&1 | grep -v "warning: setlocale" || true
 
+# Wait for HiveServer2 to be ready (port 10000)
+# Note: Hive 4.0.0 takes 2-3 minutes to fully initialize
 echo ""
-echo "============================================================"
-echo "[+] Spark with Hadoop setup completed successfully !"
-echo "============================================================"
-echo ""
-echo "[+] Run the following command to connect to the Spark container:"
-echo "  docker exec -it spark bash"
-echo ""
-echo "[+] Run the following commands to start the following services:"
-echo "  - Spark Shell: spark-shell"
-echo "  - PySpark    : pyspark"
-echo "  - Hive       : hive"
-echo "  - Beeline    : beeline"
-echo "  - HDFS       : hdfs dfs -ls /"
-echo ""
-echo "============================================================"
+echo "Waiting for HiveServer2 to start (this takes 2-3 minutes)..."
+
+wait_for_condition "HiveServer2" \
+  "docker exec spark bash -c 'netstat -tulpn 2>/dev/null | grep -q \":10000 \"'" \
+  180 3 || {
+    echo "  HiveServer2 may need more time to start"
+    echo "  Check status with: docker exec spark ps aux | grep hive"
+  }
+
+# -----------------------------------------------------------------------------
+# Setup Complete
+# -----------------------------------------------------------------------------
+
+print_section "Setup completed successfully!"
+
+cat << 'EOF'
+
+✓ All services are running:
+  - Java 17
+  - Spark 3.5.7 (Scala 2.13)
+  - Hadoop 3.3.6 (HDFS)
+  - Hive 4.0.0 (Metastore + HiveServer2)
+  - PostgreSQL (Metastore DB)
+
+Connect to container:
+  docker exec -it spark bash
+
+Test services:
+  spark-shell                                  # Spark with Scala
+  pyspark                                       # Spark with Python
+  beeline -u "jdbc:hive2://localhost:10000" -n root  # Hive
+  hdfs dfs -ls /                               # HDFS
+
+Example Hive commands:
+  show databases;
+  create database test_db;
+  create table test_db.users (id int, name string);
+  insert into test_db.users values (1, 'Alice'), (2, 'Bob');
+  select * from test_db.users;
+
+For more information, see README.md
+
+EOF
+
+echo "=================================================="

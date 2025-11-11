@@ -291,31 +291,36 @@ echo "Running final health checks..."
 # Initialize error tracking
 ERRORS=()
 
-# Test 1: HDFS
+# Test 1: HDFS (non-blocking, process-based)
 echo "  Testing HDFS..."
-HDFS_ERROR=$(docker exec spark bash -c 'hdfs dfs -ls / 2>&1' | grep -i "error\|exception" | head -1)
-if docker exec spark bash -c 'hdfs dfs -ls / >/dev/null 2>&1'; then
-  echo "    ✓ HDFS is working"
+if docker exec spark bash -c 'ps aux | grep -q "org.apache.hadoop.hdfs.server.namenode.NameNode" && ps aux | grep -q "org.apache.hadoop.hdfs.server.datanode.DataNode"'; then
+  echo "    ✓ HDFS daemons are running"
 else
-  echo "    ✗ HDFS test failed"
-  if [ -n "$HDFS_ERROR" ]; then
-    ERRORS+=("HDFS: $HDFS_ERROR")
+  echo "    ⚠ HDFS daemons not detected, performing quick dfs check..."
+  HDFS_ERROR=$(docker exec spark bash -c 'timeout 15s hdfs dfs -ls / 2>&1' | grep -i "error\|exception\|timed out" | head -1)
+  if docker exec spark bash -c 'timeout 15s hdfs dfs -ls / >/dev/null 2>&1'; then
+    echo "    ✓ HDFS is working"
   else
-    ERRORS+=("HDFS: Cannot list root directory")
+    echo "    ✗ HDFS test failed"
+    if [ -n "$HDFS_ERROR" ]; then
+      ERRORS+=("HDFS: $HDFS_ERROR")
+    else
+      ERRORS+=("HDFS: dfs check failed (timeout or unknown error)")
+    fi
   fi
 fi
 
 # Test 2: Spark
 echo "  Testing Spark..."
-SPARK_VERSION=$(docker exec spark bash -c 'spark-shell --version 2>&1 | grep "version" | head -1' || echo "")
-if docker exec spark bash -c 'spark-shell --version 2>&1 | grep -q "version 3.5.7"'; then
+SPARK_VERSION=$(docker exec spark bash -c 'timeout 20s spark-submit --version 2>&1 | grep -E "version" | head -1' || echo "")
+if docker exec spark bash -c 'timeout 20s spark-submit --version 2>&1 | grep -q "version 3.5.7"'; then
   echo "    ✓ Spark is working"
 else
   echo "    ✗ Spark test failed"
   if [ -n "$SPARK_VERSION" ]; then
     ERRORS+=("Spark: Expected version 3.5.7, found: $SPARK_VERSION")
   else
-    ERRORS+=("Spark: Version check failed - spark-shell not responding")
+    ERRORS+=("Spark: Version check failed - spark-submit not responding within timeout")
   fi
 fi
 

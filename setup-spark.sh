@@ -190,35 +190,19 @@ wait_for_condition "HiveServer2" \
 # Setup Complete
 # -----------------------------------------------------------------------------
 
-print_section "Setup completed successfully!"
-
-cat << 'EOF'
-
-✓ All services are running:
-  - Java 17
-  - Spark 3.5.7 (Scala 2.13)
-  - Hadoop 3.3.6 (HDFS)
-  - Hive 4.0.0 (Metastore + HiveServer2)
-  - PostgreSQL (Metastore DB)
-
-Connect to container:
-  docker exec -it spark bash
-
-Test services:
-  spark-shell                                  # Spark with Scala
-  pyspark                                       # Spark with Python
-  beeline -u "jdbc:hive2://localhost:10000" -n root  # Hive
-  hdfs dfs -ls /                               # HDFS
-
-Example Hive commands:
-  show databases;
-  create database test_db;
-  create table test_db.users (id int, name string);
-  insert into test_db.users values (1, 'Alice'), (2, 'Bob');
-  select * from test_db.users;
-
-For more information, see README.md
-
-EOF
-
-echo "=================================================="
+echo ""
+echo "============================================================"
+echo "[+] Spark with Hadoop setup completed successfully !"
+echo "============================================================"
+echo ""
+echo "[+] Run the following command to connect to the Spark container:"
+echo "  docker exec -it spark bash"
+echo ""
+echo "[+] Run the following commands to start the following services:"
+echo "  - Spark Shell: spark-shell"
+echo "  - PySpark    : pyspark"
+echo "  - Hive       : hive"
+echo "  - Beeline    : beeline"
+echo "  - HDFS       : hdfs dfs -ls /"
+echo ""
+echo "============================================================"

@@ -195,20 +195,30 @@ ERRORS=()
 
 # Test 1: HDFS
 echo "  Testing HDFS..."
+HDFS_ERROR=$(docker exec spark bash -c 'hdfs dfs -ls / 2>&1' | grep -i "error\|exception" | head -1)
 if docker exec spark bash -c 'hdfs dfs -ls / >/dev/null 2>&1'; then
   echo "    ✓ HDFS is working"
 else
   echo "    ✗ HDFS test failed"
-  ERRORS+=("HDFS: Cannot list root directory")
+  if [ -n "$HDFS_ERROR" ]; then
+    ERRORS+=("HDFS: $HDFS_ERROR")
+  else
+    ERRORS+=("HDFS: Cannot list root directory")
+  fi
 fi
 
 # Test 2: Spark
 echo "  Testing Spark..."
+SPARK_VERSION=$(docker exec spark bash -c 'spark-shell --version 2>&1 | grep "version" | head -1' || echo "")
 if docker exec spark bash -c 'spark-shell --version 2>&1 | grep -q "version 3.5.7"'; then
   echo "    ✓ Spark is working"
 else
   echo "    ✗ Spark test failed"
-  ERRORS+=("Spark: Version check failed")
+  if [ -n "$SPARK_VERSION" ]; then
+    ERRORS+=("Spark: Expected version 3.5.7, found: $SPARK_VERSION")
+  else
+    ERRORS+=("Spark: Version check failed - spark-shell not responding")
+  fi
 fi
 
 # Test 3: Hive Metastore
@@ -217,7 +227,12 @@ if docker exec spark bash -c 'netstat -tulpn 2>/dev/null | grep -q ":9083"'; the
   echo "    ✓ Hive Metastore is working"
 else
   echo "    ✗ Hive Metastore not running"
-  ERRORS+=("Hive Metastore: Port 9083 not listening")
+  METASTORE_PROCESS=$(docker exec spark bash -c 'ps aux | grep "metastore.HiveMetaStore" | grep -v grep' || echo "")
+  if [ -n "$METASTORE_PROCESS" ]; then
+    ERRORS+=("Hive Metastore: Process running but port 9083 not listening (still initializing?)")
+  else
+    ERRORS+=("Hive Metastore: Process not running - check logs with: docker exec spark tail -50 /tmp/root/hive.log")
+  fi
 fi
 
 # Test 4: HiveServer2
@@ -226,7 +241,12 @@ if docker exec spark bash -c 'netstat -tulpn 2>/dev/null | grep -q ":10000"'; th
   echo "    ✓ HiveServer2 is working"
 else
   echo "    ✗ HiveServer2 not running"
-  ERRORS+=("HiveServer2: Port 10000 not listening")
+  HIVESERVER_PROCESS=$(docker exec spark bash -c 'ps aux | grep "HiveServer2" | grep -v grep' || echo "")
+  if [ -n "$HIVESERVER_PROCESS" ]; then
+    ERRORS+=("HiveServer2: Process running but port 10000 not listening (still initializing?)")
+  else
+    ERRORS+=("HiveServer2: Process not running - check logs with: docker exec spark tail -50 /tmp/root/hive.log")
+  fi
 fi
 
 # -----------------------------------------------------------------------------

@@ -271,7 +271,7 @@ for i in $(seq 1 180); do
   fi
   NOW=$(date +%s); ELAPSED=$((NOW - JDBC_START_TS))
   if (( i % 10 == 0 )); then echo "  Still waiting for JDBC... (${ELAPSED}s elapsed)"; fi
-  sleep 5
+  sleep 2
 done
 if [ "$JDBC_READY" != true ]; then
   echo "✗ HiveServer2 JDBC not responsive in time. Last HS2 log lines:"; docker exec spark bash -c 'tail -80 /tmp/root/hiveserver2.log || true'
@@ -364,13 +364,13 @@ if [ ${#ERRORS[@]} -eq 0 ]; then
   echo "============================================================"
   echo ""
   echo "[+] Run the following command to connect to the Spark container:"
-  echo "  docker exec -it spark bash"
+  echo "    docker exec -it spark bash"
   echo ""
   echo "[+] Run the following commands to start the following services:"
   echo "  - Spark Shell: spark-shell"
   echo "  - PySpark    : pyspark"
   echo "  - Hive       : hive"
-  echo "  - Beeline    : beeline"
+  echo "  - Beeline    : beeline -u jdbc:hive2://localhost:10000"
   echo "  - HDFS       : hdfs dfs -ls /"
   echo ""
   echo "============================================================"

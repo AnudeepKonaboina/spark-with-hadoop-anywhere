@@ -179,30 +179,49 @@ docker exec -d spark bash -lc '
 echo ""
 echo "Waiting for HiveServer2 to start (this takes 2-3 minutes)..."
 
-wait_for_condition "HiveServer2" \
+if wait_for_condition "HiveServer2" \
   "docker exec spark bash -c 'netstat -tulpn 2>/dev/null | grep -q \":10000 \"'" \
-  180 3 || {
-    echo "  HiveServer2 may need more time to start"
-    echo "  Check status with: docker exec spark ps aux | grep hive"
-  }
-
-# -----------------------------------------------------------------------------
-# Setup Complete
-# -----------------------------------------------------------------------------
-
-echo ""
-echo "============================================================"
-echo "[+] Spark with Hadoop setup completed successfully !"
-echo "============================================================"
-echo ""
-echo "[+] Run the following command to connect to the Spark container:"
-echo "  docker exec -it spark bash"
-echo ""
-echo "[+] Run the following commands to start the following services:"
-echo "  - Spark Shell: spark-shell"
-echo "  - PySpark    : pyspark"
-echo "  - Hive       : hive"
-echo "  - Beeline    : beeline"
-echo "  - HDFS       : hdfs dfs -ls /"
-echo ""
-echo "============================================================"
+  180 3; then
+  
+  # -----------------------------------------------------------------------------
+  # Setup Complete - All services are ready
+  # -----------------------------------------------------------------------------
+  
+  echo ""
+  echo "============================================================"
+  echo "[+] Spark with Hadoop setup completed successfully !"
+  echo "============================================================"
+  echo ""
+  echo "[+] Run the following command to connect to the Spark container:"
+  echo "  docker exec -it spark bash"
+  echo ""
+  echo "[+] Run the following commands to start the following services:"
+  echo "  - Spark Shell: spark-shell"
+  echo "  - PySpark    : pyspark"
+  echo "  - Hive       : hive"
+  echo "  - Beeline    : beeline"
+  echo "  - HDFS       : hdfs dfs -ls /"
+  echo ""
+  echo "============================================================"
+else
+  # HiveServer2 failed to start within timeout
+  echo ""
+  echo "============================================================"
+  echo "⚠ Setup incomplete - HiveServer2 did not start in time"
+  echo "============================================================"
+  echo ""
+  echo "Troubleshooting steps:"
+  echo "  1. Check HiveServer2 status:"
+  echo "     docker exec spark ps aux | grep hive"
+  echo ""
+  echo "  2. Check HiveServer2 logs:"
+  echo "     docker exec spark tail -100 /tmp/root/hive.log"
+  echo ""
+  echo "  3. Wait a few more minutes and test manually:"
+  echo "     docker exec spark beeline -u \"jdbc:hive2://localhost:10000\" -n root -e \"show databases;\""
+  echo ""
+  echo "Other services (Spark, HDFS) are available:"
+  echo "  docker exec -it spark bash"
+  echo "============================================================"
+  exit 1
+fi

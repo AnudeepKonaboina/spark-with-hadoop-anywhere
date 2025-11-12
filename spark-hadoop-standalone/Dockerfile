@@ -21,7 +21,8 @@ RUN cd /etc/yum.repos.d/ && \
         python3-pip \
         aria2 \
         tar \
-        gzip && \
+        gzip \
+        sudo && \
     yum clean all && \
     rm -rf /var/cache/yum
 

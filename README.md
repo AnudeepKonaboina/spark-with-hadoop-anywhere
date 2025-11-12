@@ -3,10 +3,10 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/44436c70bdcf427abd4b2d60ef3900f2)](https://app.codacy.com/gh/AnudeepKonaboina/spark-with-hadoop-anywhere/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
 
-[![Spark](https://img.shields.io/badge/Spark-3.5.7-E25A1C?logo=apachespark&logoColor=white)](https://spark.apache.org/releases/spark-release-3-5-7.html)
+[![Spark](https://img.shields.io/badge/Spark-3.5.2-E25A1C?logo=apachespark&logoColor=white)](https://spark.apache.org/releases/spark-release-3-5-2.html)
 [![Hadoop](https://img.shields.io/badge/Hadoop-3.3.6-66CCFF?logo=apachehadoop&logoColor=white)](https://hadoop.apache.org/release/3.3.6.html)
 [![Hive](https://img.shields.io/badge/Hive-4.0.0-FDEE21?logo=apachehive&logoColor=black)](https://hive.apache.org/downloads.html)
-[![Scala](https://img.shields.io/badge/Scala-2.13.14-DC322F?logo=scala&logoColor=white)](https://www.scala-lang.org/download/2.13.14.html)
+[![Scala](https://img.shields.io/badge/Scala-2.12.18-DC322F?logo=scala&logoColor=white)](https://www.scala-lang.org/download/2.12.18.html)
 [![Java](https://img.shields.io/badge/Java-17-007396?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/17/)
 [![CentOS](https://img.shields.io/badge/CentOS-7-262577?logo=centos&logoColor=white)](https://wiki.centos.org/Manuals/ReleaseNotes/CentOS7)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-11.12-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/docs/11/release-11-12.html)
@@ -50,7 +50,8 @@ docker run hello-world
 
 | Service      | Version     |
 | -----------  | ----------- |
-| Spark        | 3.5.7       |
+| Spark        | 3.5.2       |
+| Scala        | 2.12.18     |
 | Hadoop       | 3.3.6       |
 | Hive         | 4.0.0       |
 
@@ -160,20 +161,17 @@ drwxr-xr-x   - root supergroup          0 2021-06-02 12:22 /user
 #### To run spark shell within container:
 ```commandline
 [root@hadoop /]# spark-shell
-2025-11-10 13:55:26,694 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
-Setting default log level to "WARN".
-To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
 Spark context Web UI available at http://hadoop.spark:4040
-Spark context available as 'sc' (master = local[*], app id = local-1762782928691).
+Spark context available as 'sc' (master = local[*], app id = local-1762921247292).
 Spark session available as 'spark'.
 Welcome to
       ____              __
      / __/__  ___ _____/ /__
     _\ \/ _ \/ _ `/ __/  '_/
-   /___/ .__/\_,_/_/ /_/\_\   version 3.5.7
+   /___/ .__/\_,_/_/ /_/\_\   version 3.5.2
       /_/
          
-Using Scala version 2.13.14 (OpenJDK 64-Bit Server VM, Java 17.0.9)
+Using Scala version 2.12.18 (OpenJDK 64-Bit Server VM, Java 17.0.9)
 Type in expressions to have them evaluated.
 Type :help for more information.
 

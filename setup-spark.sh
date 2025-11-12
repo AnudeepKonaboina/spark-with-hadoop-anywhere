@@ -8,7 +8,7 @@ fi
 # =============================================================================
 # Spark with Hadoop Setup Script
 # =============================================================================
-# Description: Sets up Spark 3.5.2 with Hadoop 3.3.6 and Hive 4.0.0
+# Description: Sets up Spark 3.5.2 with Hadoop 3.3.6 and Hive 4.0.0 on Scala 2.12
 # Requirements: Docker, Docker Compose
 # 
 # Usage:
@@ -115,10 +115,10 @@ else
   print_section "Pulling images from DockerHub"
   
   docker pull docker4ops/hive-metastore:hive-4.0.0
-  docker pull docker4ops/spark-with-hadoop:spark-3.5.2_hadoop-3.3.6_hive-4.0.0
+  docker pull docker4ops/spark-with-hadoop:spark-3.5.2_hadoop-3.3.6_hive-4.0.0_scala_2.12
   
   export HIVE_METASTORE_IMAGE="docker4ops/hive-metastore:hive-4.0.0"
-  export SPARK_HADOOP_IMAGE="docker4ops/spark-with-hadoop:spark-3.5.2_hadoop-3.3.6_hive-4.0.0"
+  export SPARK_HADOOP_IMAGE="docker4ops/spark-with-hadoop:spark-3.5.2_hadoop-3.3.6_hive-4.0.0_scala_2.12"
 fi
 
 # -----------------------------------------------------------------------------

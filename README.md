@@ -3,9 +3,9 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/44436c70bdcf427abd4b2d60ef3900f2)](https://app.codacy.com/gh/AnudeepKonaboina/spark-with-hadoop-anywhere/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
 
-[![Spark](https://img.shields.io/badge/Spark-3.5.7-E25A1C?logo=apachespark&logoColor=white)](https://spark.apache.org/releases/spark-release-3-5-7.html)
-[![Hadoop](https://img.shields.io/badge/Hadoop-3.3.6-66CCFF?logo=apachehadoop&logoColor=white)](https://hadoop.apache.org/release/3.3.6.html)
-[![Hive](https://img.shields.io/badge/Hive-4.0.0-FDEE21?logo=apachehive&logoColor=black)](https://hive.apache.org/downloads.html)
+[![Spark](https://img.shields.io/badge/Spark-4.0.0-E25A1C?logo=apachespark&logoColor=white)](https://spark.apache.org/releases/spark-release-4-0-0.html)
+[![Hadoop](https://img.shields.io/badge/Hadoop-3.4.1-66CCFF?logo=apachehadoop&logoColor=white)](https://hadoop.apache.org/release/3.4.1.html)
+[![Hive](https://img.shields.io/badge/Hive-4.0.1-FDEE21?logo=apachehive&logoColor=black)](https://hive.apache.org/downloads.html)
 [![Scala](https://img.shields.io/badge/Scala-2.13.14-DC322F?logo=scala&logoColor=white)](https://www.scala-lang.org/download/2.13.14.html)
 [![Java](https://img.shields.io/badge/Java-17-007396?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/17/)
 [![CentOS](https://img.shields.io/badge/CentOS-7-262577?logo=centos&logoColor=white)](https://wiki.centos.org/Manuals/ReleaseNotes/CentOS7)

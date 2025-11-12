@@ -8,7 +8,7 @@ fi
 # =============================================================================
 # Spark with Hadoop Setup Script
 # =============================================================================
-# Description: Sets up Spark 3.5.7 with Hadoop 3.3.6 and Hive 4.0.0
+# Description: Sets up Spark 3.5.2 with Hadoop 3.3.6 and Hive 4.0.0
 # Requirements: Docker, Docker Compose
 # 
 # Usage:
@@ -17,7 +17,7 @@ fi
 #
 # Components:
 #   - Java 17 (Adoptium Temurin)
-#   - Spark 3.5.7 (Scala 2.13)
+#   - Spark 3.5.2 (Scala 2.13)
 #   - Hadoop 3.3.6
 #   - Hive 4.0.0
 #   - PostgreSQL metastore
@@ -115,10 +115,10 @@ else
   print_section "Pulling images from DockerHub"
   
   docker pull docker4ops/hive-metastore:hive-4.0.0
-  docker pull docker4ops/spark-with-hadoop:spark-3.5.7_hadoop-3.3.6_hive-4.0.0
+  docker pull docker4ops/spark-with-hadoop:spark-3.5.2_hadoop-3.3.6_hive-4.0.0
   
   export HIVE_METASTORE_IMAGE="docker4ops/hive-metastore:hive-4.0.0"
-  export SPARK_HADOOP_IMAGE="docker4ops/spark-with-hadoop:spark-3.5.7_hadoop-3.3.6_hive-4.0.0"
+  export SPARK_HADOOP_IMAGE="docker4ops/spark-with-hadoop:spark-3.5.2_hadoop-3.3.6_hive-4.0.0"
 fi
 
 # -----------------------------------------------------------------------------
@@ -313,12 +313,12 @@ fi
 # Test 2: Spark
 echo "  Testing Spark..."
 SPARK_VERSION=$(docker exec spark bash -c 'timeout 20s spark-submit --version 2>&1 | grep -E "version" | head -1' || echo "")
-if docker exec spark bash -c 'timeout 20s spark-submit --version 2>&1 | grep -q "version 3.5.7"'; then
+if docker exec spark bash -c 'timeout 20s spark-submit --version 2>&1 | grep -q "version 3.5.2"'; then
   echo "    ✓ Spark is working"
 else
   echo "    ✗ Spark test failed"
   if [ -n "$SPARK_VERSION" ]; then
-    ERRORS+=("Spark: Expected version 3.5.7, found: $SPARK_VERSION")
+    ERRORS+=("Spark: Expected version 3.5.2, found: $SPARK_VERSION")
   else
     ERRORS+=("Spark: Version check failed - spark-submit not responding within timeout")
   fi

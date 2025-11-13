@@ -81,8 +81,8 @@ RUN aria2c -x 16 -s 16 -k 1M --max-tries=5 --retry-wait=3 \
     rm -rf /usr/bin/spark-${spark_version}-bin-without-hadoop/R
 
 # set environment variables for spark
-ENV SPARK_HOME=/usr/bin/spark-${spark_version}-bin-without-hadoop-scala-2.13 \
-    SPARK_LOG_DIR=/usr/bin/spark-${spark_version}-bin-without-hadoop-scala-2.13/logs
+ENV SPARK_HOME=/usr/bin/spark-${spark_version}-bin-without-hadoop \
+    SPARK_LOG_DIR=/usr/bin/spark-${spark_version}-bin-without-hadoop/logs
 
 ENV PATH=${SPARK_HOME}/bin:${SPARK_HOME}/sbin:${PATH}
 

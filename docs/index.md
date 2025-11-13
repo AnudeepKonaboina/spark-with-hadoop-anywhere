@@ -5,7 +5,7 @@ title: Spark with Hadoop on Docker
 
 <div class="hero">
   <h1>Spark with Hadoop on Docker</h1>
-  <p><strong> A production-ready, version-pinned Spark + Hadoop + Hive stack on Docker, fully aligned with the open-source Spark versions used by Databricks Runtime (DBR). Deploy it on any machine within minutes using a single command. </strong></p>
+  <p><strong> A production-ready, version-pinned Spark + Hadoop + Hive stack on Docker, fully aligned with the open-source Spark versions used by Databricks Runtime (DBR), installable on any machine within minutes using a single command </strong></p>
 </div>
 
 <div style="text-align: center; margin: 2rem 0;">
@@ -167,7 +167,7 @@ Each branch provides a logically similar architecture with version-specific arti
 
 There are two containers as you see in the architectural diagram above:
 
-## Spark Container
+### Spark Container
 
 This container runs the below three services:
 
@@ -187,7 +187,7 @@ This container runs the below three services:
   
   - Hive CLI and Beeline available inside the Spark container
    
-## Hive metastore Container
+### Hive metastore Container
 
 **External Hive Metastore** backed by PostgreSQL in a dedicated container
   - `hive-site.xml` configured for:
@@ -205,7 +205,7 @@ This container runs the below three services:
 
 ## **DBR underlying Spark OSS Compatible Branches**
 
-Branches are curated to align with **Databricks Runtime (DBR)** and underlying **OSS Spark** versions.
+Branches are curated to align with **Databricks Runtime (DBR)** and underlying **OSS Spark** versions. Click on the branch name you want and i will take you to that specific branch in the reprository
 
 <div style="width: 100%; overflow-x: auto;">
 <table style="width: 100%; border-collapse: collapse;">
@@ -269,7 +269,7 @@ Branches are curated to align with **Databricks Runtime (DBR)** and underlying *
 
 ---
 
-## **What Makes This Different**
+## **What makes this different from other Repos**
 
 There are many Spark Docker images, but this project specifically targets **data platform engineers, SREs,support engineers,developers** working on real world pipelines involiving data analytcis.
 
@@ -298,7 +298,7 @@ You get a <strong>full analytics node</strong>: Spark + HDFS + Hive Metastore + 
 
 ---
 
-## **Use Cases**
+## **Some Use Cases**
 
 ### 1. Reproducing Databricks / DBR Behavior Locally
 

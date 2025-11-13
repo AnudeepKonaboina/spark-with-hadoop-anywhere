@@ -5,7 +5,7 @@ title: Spark with Hadoop on Docker
 
 <div class="hero">
   <h1>Spark with Hadoop on Docker</h1>
-  <p><strong> A Production ready, version-pinned Spark + Hadoop + Hive stack on Docker,aligned with the OSS Spark versions used by Databricks Runtime (DBR),installable with a single-click </strong></p>
+  <p><strong> A Production ready, version-pinned Spark + Hadoop + Hive stack deployed on Docker,aligned with the OSS Spark versions used by Databricks Runtime (DBR),installable in few minutes with a single command </strong></p>
 </div>
 
 <div style="text-align: center; margin: 2rem 0;">
@@ -72,32 +72,32 @@ Each branch in this project corresponds to a specific **Spark / Scala /Java** co
 
 ## User Challenges
 
-Real-world problems this project helps solve:
+Below are some real-world challanges users face:
 
 <div class="feature-grid">
   <div class="feature-box">
-    <h4>Third-Party Library Compatibility with spark</h4>
-    <p>Some libraries work well with OSS Spark but fail with Databricks. How do we reproduce and test this?</p>
+    <h4>Third-Party Library Compatibility</h4>
+    <p>Some libraries work well with open-source Apache Spark but fail on Databricks. How can developers reproduce and debug these issues locally?</p>
   </div>
   <div class="feature-box">
     <h4>Behavioral Differences</h4>
-    <p>How do we reproduce behavioral differences between Databricks and on-premises OSS Spark implementations with Delta or other libraries?</p>
+    <p>How can we reproduce and compare behavioral differences between Databricks and on-premises Spark environments, especially when using Delta Lake or other extensions?</p>
   </div>
   <div class="feature-box">
-    <h4>Feature Development</h4>
-    <p>Developers want to implement new features on OSS spark or on any third party integrations with spark and perform minimal testing before production deployment</p>
+    <h4>Feature Development and Testing</h4>
+    <p>Developers often need to build new features or integrations (e.g., Delta, MongoDB, Redshift) on open-source Spark and run minimal tests before production deployment.</p>
   </div>
   <div class="feature-box">
-    <h4>OSS Spark Connectors Testing</h4>
-    <p>How do i implement a new feature or fix a bug in open-source Spark or spark-connector libraries like Delta/MongoDB/Redshift and test it locally ?</p>
+    <h4>End-to-End ETL Pipeline Development</h4>
+    <p>How can I implement a complete ETL pipeline—including Airflow, Kafka, and Spark with minimal data locally for experimentation and testing?</p>
   </div>
-   <div class="feature-box">
-    <h4>Regression issues between spark versions</h4>
-    <p> I have an issue in spark 4.0.0 on my on-premise env , how can i test this locally and see if it work in spark 3.5.x ?</p>
+  <div class="feature-box">
+    <h4>Regression Testing Across Spark Versions</h4>
+    <p>If an issue occurs in Spark 4.0.0 on-premises, how can I easily test it locally and verify whether it also exists in Spark 3.5.x?</p>
   </div>
-    <div class="feature-box">
+  <div class="feature-box">
     <h4>Learning and Enablement</h4>
-    <p>How do i get cluster like setup locally to learn spark ?b</p>
+    <p>How can I get a cluster-like local environment to learn Spark concepts and experiment safely?</p>
   </div>
 </div>
 
@@ -159,34 +159,42 @@ The project is built around these core principles:
 
 ---
 
-## Architecture
+# Architecture
 
 Each branch provides a logically similar architecture with version-specific artifacts:
 
 ![Spark with Hadoop Anywhere Architecture](images/architecture.jpg)
 
-### Spark
+There are two containers as you see in the architectural diagram above:
 
-- Spark runs in **standalone mode** (master + worker in a single container)
-- Spark distributions are wired to the Hadoop client classpath
-- Configurable through standard `spark-defaults.conf`, `spark-env.sh`, etc.
+### Spark Container
 
-### Hadoop (HDFS)
+This container runs the below three services:
 
-- Single-node HDFS **namenode + datanode**
-- Backed by container-local storage paths (no external FS required)
-- Bootstrapped at startup with **format-once** pattern and idempotent initialization
+  #### Spark
+  
+  - Spark runs in **standalone mode** (master + worker in a single container)
+  - Spark distributions are wired to the Hadoop client classpath
+  - Configurable through standard `spark-defaults.conf`, `spark-env.sh`, etc.
+  
+  #### Hadoop (HDFS)
+  
+  - Single-node HDFS **namenode + datanode**
+  - Backed by container-local storage paths (no external FS required)
+  - Bootstrapped at startup with **format-once** pattern and idempotent initialization
 
-### Hive & Metastore
+  #### Hive CLI
+  
+  - Hive CLI and Beeline available inside the Spark container
+   
+### Hive metastore Container
+**External Hive Metastore** backed by PostgreSQL in a dedicated container
+  - `hive-site.xml` configured for:
+    - Metastore DB credentials
+    - Metastore host/port
+    - Shared warehouse location
 
-- Hive CLI and Beeline available inside the Spark container
-- **External Hive Metastore** backed by PostgreSQL in a dedicated container
-- `hive-site.xml` configured for:
-  - Metastore DB credentials
-  - Metastore host/port
-  - Shared warehouse location
-
-### Orchestration
+## Container Orchestration
 
 - `docker-compose.yml` wires together all services
 - Readiness checks ensure proper startup order
@@ -405,9 +413,9 @@ You get a <strong>full analytics node</strong>: Spark + HDFS + Hive Metastore + 
 
 ### Prerequisites
 
-Make sure you have these tools installed by following the installation steps in the README file:
+Make sure you have these tools installed by following the installation steps in the [README](https://github.com/AnudeepKonaboina/spark-with-hadoop-anywhere?tab=readme-ov-file#pre-requisites) file and then verify the istallation:
 - Docker Engine
-- Docker Compose (or `docker compose` plugin)
+- Docker Compose (or `docker-compose` plugin)
 - Git
 
 ```
@@ -420,18 +428,14 @@ git --version
 
 ### Step-1: Clone and Choose a Branch
 
-```bash
-git clone https://github.com/AnudeepKonaboina/spark-with-hadoop-anywhere.git
-cd spark-with-hadoop-anywhere
+Choose a branch based on the spark version you want to install , you can refer to the table [DBR underlying Spark OSS Compatible Branches](#dbr-underlying-spark-oss-compatible-branches) and pick the branch based on your **Spark** version.
 
-# Example: checkout branch compatible with DBR 16.4 (Spark 3.5.2 / Scala 2.13)
-git checkout spark-3.5.2-scala-2.13
+```bash
+git clone -b <branch_name> https://github.com/AnudeepKonaboina/spark-with-hadoop-anywhere.git
+cd spark-with-hadoop-anywhere
 ```
 
-Pick the branch based on your target **DBR / Spark** version using the compatibility matrix above.
-
-
-### Step-2: Configure Secrets 
+### Step-2: Configure Secrets (hive metastore password) 
 
 ```
 mkdir -p secrets
@@ -440,13 +444,15 @@ echo "<your_strong_password_here>" > secrets/postgres_password.txt
 
 ### Step-3: Run the Setup Script
 
-**Option A: Use prebuilt images (fast)**
+There are two ways of running the setup script
+
+**Option A: Uses prebuilt images from docker hub (fast setup and recommended)**
 
 ```
 sh setup-spark.sh --run
 ```
 
-**Option B: Build images locally**
+**Option B: Build's images locally**
 
 ```
 sh setup-spark.sh --build --run
@@ -454,12 +460,13 @@ sh setup-spark.sh --build --run
 
 This will:
 - Build/pull Docker images
-- Start containers with Docker Compose
-- Initialize HDFS and Hive Metastore
+- Start containers using Docker Compose
+- Initializes Spark,HDFS and Hive Metastore
 - Verify all services are healthy
 
 ### Step-4: Verify Running Containers
 
+Once the setup is completed 
 ```bash
 docker ps
 ```
@@ -478,8 +485,6 @@ docker exec -it spark bash
 ```
 
 ## Spark
-
-
 
 To start a Spark shell:
 
@@ -525,7 +530,7 @@ beeline -u jdbc:hive2://localhost:10000/default
 
 Example queries you can run:
 
-```
+```sql
 -- Create a table
 CREATE TABLE IF NOT EXISTS employees (
   id INT,
@@ -539,7 +544,7 @@ SELECT * FROM employees LIMIT 10;
 
 ---
 
-### Extending the Image
+### Extending the Stack
 
 Common extension patterns:
 
@@ -563,13 +568,23 @@ services:
       - ./jars:/opt/jars
 ```
 
-#### Add Connectors
+#### Add more services 
+
+Yonu can add more data egineering services to the docker-compsoe file and build a complete End-to-end data eng tech stack on Docker
 
 ```bash
-# MongoDB connector example
-spark-submit \
-  --packages org.mongodb.spark:mongo-spark-connector_2.12:10.3.0 \
-  my-spark-job.py
+
+services:
+  spark:
+    volumes:
+      - ./data:/opt/data
+      - ./jars:/opt/jars
+  kafka:
+     --
+  hbase:
+     --
+  airflow:
+
 ```
 
 ---

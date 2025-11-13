@@ -1,11 +1,12 @@
-title: "Spark + Hadoop + Hive on Docker"
-description: "A production-grade OSS Spark with Hadoop and Hive stack deployed on Docker ,aligned with the OSS Spark versions used by Databricks Runtime (DBR)"
-theme: jekyll-theme-just-the-docs
-markdown: kramdown
-highlighter: rouge
-plugins:
-  - jekyll-seo-tag
-  - jekyll-sitemap
+title: "Spark + Hadoop + Hive on Docker" 
+description: "A production-grade OSS Spark/Hadoop/Hive stack deployed on Docker ,aligned with the OSS Spark versions used by Databricks Runtime (DBR)" 
+theme: jekyll-theme-cayman 
+markdown: kramdown 
+highlighter: rouge 
+plugins: 
+  - jekyll-seo-tag 
+  - jekyll-sitemap 
   - jekyll-feed
+
 
 

@@ -167,27 +167,28 @@ Each branch provides a logically similar architecture with version-specific arti
 
 There are two containers as you see in the architectural diagram above:
 
-### Spark Container
+**Spark Container**
 
 This container runs the below three services:
 
-  #### Spark
+  ### Spark
   
   - Spark runs in **standalone mode** (master + worker in a single container)
   - Spark distributions are wired to the Hadoop client classpath
   - Configurable through standard `spark-defaults.conf`, `spark-env.sh`, etc.
   
-  #### Hadoop (HDFS)
+  ### Hadoop (HDFS)
   
   - Single-node HDFS **namenode + datanode**
   - Backed by container-local storage paths (no external FS required)
   - Bootstrapped at startup with **format-once** pattern and idempotent initialization
 
-  #### Hive CLI
+  ### Hive CLI
   
   - Hive CLI and Beeline available inside the Spark container
    
-### Hive metastore Container
+**Hive metastore Container**
+
 **External Hive Metastore** backed by PostgreSQL in a dedicated container
   - `hive-site.xml` configured for:
     - Metastore DB credentials
@@ -544,11 +545,11 @@ SELECT * FROM employees LIMIT 10;
 
 ---
 
-### Extending the Stack
+## Extending the Stack
 
 Common extension patterns:
 
-#### Add Custom Jars
+### Add Custom Jars
 
 ```dockerfile
 # Extend the Dockerfile
@@ -557,7 +558,7 @@ FROM anudeepkonaboina/spark-hadoop-standalone:spark-3.5.2
 COPY custom-jars/*.jar ${SPARK_HOME}/jars/
 ```
 
-#### Mount Host Directories
+### Mount Host Directories
 
 ```yaml
 # docker-compose.yml
@@ -568,7 +569,7 @@ services:
       - ./jars:/opt/jars
 ```
 
-#### Add more services 
+### Add more services to extend the stack
 
 Yonu can add more data egineering services to the docker-compsoe file and build a complete End-to-end data eng tech stack on Docker
 

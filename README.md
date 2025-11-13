@@ -3,7 +3,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/44436c70bdcf427abd4b2d60ef3900f2)](https://app.codacy.com/gh/AnudeepKonaboina/spark-with-hadoop-anywhere/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
 
-[![Spark](https://img.shields.io/badge/Spark-3.5.7-E25A1C?logo=apachespark&logoColor=white)](https://spark.apache.org/releases/spark-release-3-5-7.html)
+[![Spark](https://img.shields.io/badge/Spark-3.5.2-E25A1C?logo=apachespark&logoColor=white)](https://spark.apache.org/releases/spark-release-3-5-2.html)
 [![Hadoop](https://img.shields.io/badge/Hadoop-3.3.6-66CCFF?logo=apachehadoop&logoColor=white)](https://hadoop.apache.org/release/3.3.6.html)
 [![Hive](https://img.shields.io/badge/Hive-4.0.0-FDEE21?logo=apachehive&logoColor=black)](https://hive.apache.org/downloads.html)
 [![Scala](https://img.shields.io/badge/Scala-2.13.14-DC322F?logo=scala&logoColor=white)](https://www.scala-lang.org/download/2.13.14.html)
@@ -50,7 +50,8 @@ docker run hello-world
 
 | Service      | Version     |
 | -----------  | ----------- |
-| Spark        | 3.5.7       |
+| Spark        | 3.5.2       |
+| Scala        | 2.13.4      |
 | Hadoop       | 3.3.6       |
 | Hive         | 4.0.0       |
 
@@ -60,7 +61,7 @@ docker run hello-world
 # Steps to setup
 1. Clone the project and navigate to the main directory
 ```commandline
-git clone -b spark-3.5.7 https://github.com/AnudeepKonaboina/spark-with-hadoop-anywhere.git && cd spark-with-hadoop-anywhere/
+git clone -b spark-3.5.2-scala-2.13 https://github.com/AnudeepKonaboina/spark-with-hadoop-anywhere.git && cd spark-with-hadoop-anywhere/
 ```
 
 2. Create the secrets password file (used by Postgres/Hive)
@@ -114,7 +115,7 @@ If you used **`--run`** (pulled from DockerHub), you'll see:
 ```commandline
 anudeep.k@SHELL% docker images
 REPOSITORY                     TAG                                    IMAGE ID       CREATED             SIZE
-docker4ops/spark-with-hadoop   spark-3.5.7_hadoop-3.3.6_hive-4.0.0    4c69c4d0041d   About an hour ago   4.24GB
+docker4ops/spark-with-hadoop   spark-3.5.2_hadoop-3.3.6_hive-4.0.0    4c69c4d0041d   About an hour ago   4.24GB
 docker4ops/hive-metastore      hive-4.0.0                             31287c798b1d   About an hour ago   286MB
 ```
 
@@ -170,7 +171,7 @@ Welcome to
       ____              __
      / __/__  ___ _____/ /__
     _\ \/ _ \/ _ `/ __/  '_/
-   /___/ .__/\_,_/_/ /_/\_\   version 3.5.7
+   /___/ .__/\_,_/_/ /_/\_\   version 3.5.2
       /_/
          
 Using Scala version 2.13.14 (OpenJDK 64-Bit Server VM, Java 17.0.9)

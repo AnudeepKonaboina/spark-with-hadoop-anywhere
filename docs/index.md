@@ -5,7 +5,7 @@ title: Spark with Hadoop on Docker
 
 <div class="hero">
   <h1>Spark with Hadoop on Docker</h1>
-  <p><strong> A Production ready, version-pinned Spark + Hadoop + Hive stack deployed on Docker,aligned with the OSS Spark versions used by Databricks Runtime (DBR),installable in few minutes with a single command </strong></p>
+  <p><strong> A Production ready, version-pinned Spark + Hadoop + Hive stack deployed on Docker, aligned with the OSS Spark versions used by Databricks Runtime (DBR), installable on any machine in a few minutes using a single command </strong></p>
 </div>
 
 <div style="text-align: center; margin: 2rem 0;">
@@ -167,27 +167,27 @@ Each branch provides a logically similar architecture with version-specific arti
 
 There are two containers as you see in the architectural diagram above:
 
-**Spark Container**
+## **Spark Container**
 
 This container runs the below three services:
 
-  ### Spark
+#### Spark
   
   - Spark runs in **standalone mode** (master + worker in a single container)
   - Spark distributions are wired to the Hadoop client classpath
   - Configurable through standard `spark-defaults.conf`, `spark-env.sh`, etc.
   
-  ### Hadoop (HDFS)
+#### Hadoop (HDFS)
   
   - Single-node HDFS **namenode + datanode**
   - Backed by container-local storage paths (no external FS required)
   - Bootstrapped at startup with **format-once** pattern and idempotent initialization
 
-  ### Hive CLI
+#### Hive CLI
   
   - Hive CLI and Beeline available inside the Spark container
    
-**Hive metastore Container**
+## **Hive metastore Container**
 
 **External Hive Metastore** backed by PostgreSQL in a dedicated container
   - `hive-site.xml` configured for:
@@ -432,8 +432,7 @@ git --version
 Choose a branch based on the spark version you want to install , you can refer to the table [DBR underlying Spark OSS Compatible Branches](#dbr-underlying-spark-oss-compatible-branches) and pick the branch based on your **Spark** version.
 
 ```bash
-git clone -b <branch_name> https://github.com/AnudeepKonaboina/spark-with-hadoop-anywhere.git
-cd spark-with-hadoop-anywhere
+git clone -b spark-2.4.7 https://github.com/AnudeepKonaboina/spark-with-hadoop-anywhere.git && cd spark-with-hadoop-anywhere/
 ```
 
 ### Step-2: Configure Secrets (hive metastore password) 
@@ -581,9 +580,9 @@ services:
       - ./data:/opt/data
       - ./jars:/opt/jars
   kafka:
-     --
+       --
   hbase:
-     --
+       --
   airflow:
 
 ```

@@ -5,7 +5,7 @@ title: Spark with Hadoop on Docker
 
 <div class="hero">
   <h1>Spark with Hadoop on Docker</h1>
-  <p><strong> A Production ready, version-pinned Spark + Hadoop + Hive stack deployed on Docker, aligned with the OSS Spark versions used by Databricks Runtime (DBR), installable on any machine in a few minutes using a single command </strong></p>
+  <p><strong> A production-ready, version-pinned Spark + Hadoop + Hive stack on Docker, fully aligned with the open-source Spark versions used by Databricks Runtime (DBR). Deploy it on any machine within minutes using a single command. </strong></p>
 </div>
 
 <div style="text-align: center; margin: 2rem 0;">

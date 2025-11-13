@@ -3,7 +3,7 @@
 # =============================================================================
 # Spark with Hadoop Setup Script
 # =============================================================================
-# Description: Sets up Spark 3.5.7 with Hadoop 3.3.6 and Hive 4.0.0
+# Description: Sets up Spark 3.4.1 with Hadoop 3.3.6 and Hive 3.1.3
 # Requirements: Docker, Docker Compose
 # 
 # Usage:

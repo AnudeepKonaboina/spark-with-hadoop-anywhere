@@ -5,7 +5,7 @@ title: Spark with Hadoop on Docker
 
 <div class="hero">
   <h1>Spark with Hadoop on Docker</h1>
-  <p><strong> A production-ready, version-pinned Spark + Hadoop + Hive stack on Docker, fully aligned with the open-source Spark versions used by Databricks Runtime (DBR), installable on any machine within minutes using a single command </strong></p>
+  <p><strong>Production-ready Spark + Hadoop + Hive stack aligned with Databricks Runtime (DBR) OSS versions.<br>Install with a single command in minutes.</strong></p>
 </div>
 
 <div style="text-align: center; margin: 2rem 0;">
@@ -530,7 +530,7 @@ beeline -u jdbc:hive2://localhost:10000/default
 
 Example queries you can run:
 
-```sql
+```
 -- Create a table
 CREATE TABLE IF NOT EXISTS employees (
   id INT,

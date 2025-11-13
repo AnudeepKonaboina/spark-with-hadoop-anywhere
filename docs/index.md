@@ -40,7 +40,7 @@ title: Spark with Hadoop on Docker
 
 ---
 
-## Introduction
+## **Introduction**
 
 This project `Spark with Hadoop Anywhere` provides a production‑like Spark + Hadoop + Hive stack deployed in Docker  containers that closely mirror real-world Spark environments with one command so that you can develop, test, and demo locally. 
 
@@ -53,7 +53,7 @@ Each branch in this project corresponds to a specific **Spark / Scala /Java** co
 
 ---
 
-## Table of Contents
+## **Table of Contents**
 
 - [User Challenges](#user-challenges)
 - [Motivation](#motivation)
@@ -70,7 +70,7 @@ Each branch in this project corresponds to a specific **Spark / Scala /Java** co
 
 ---
 
-## User Challenges
+## **User Challenges**
 
 Below are some real-world challanges users face:
 
@@ -103,7 +103,7 @@ Below are some real-world challanges users face:
 
 ---
 
-## Motivation
+## **Motivation**
 
 Modern data platforms (Databricks, EMR, on-prem Hadoop) are:
 
@@ -123,7 +123,7 @@ Typical local setups (e.g., just `spark-shell` on a laptop or a single generic S
 
 ---
 
-## Design Goals
+## **Design Goals**
 
 The project is built around these core principles:
 
@@ -159,7 +159,7 @@ The project is built around these core principles:
 
 ---
 
-# Architecture
+# **Architecture**
 
 Each branch provides a logically similar architecture with version-specific artifacts:
 
@@ -167,7 +167,7 @@ Each branch provides a logically similar architecture with version-specific arti
 
 There are two containers as you see in the architectural diagram above:
 
-## **Spark Container**
+## Spark Container
 
 This container runs the below three services:
 
@@ -187,7 +187,7 @@ This container runs the below three services:
   
   - Hive CLI and Beeline available inside the Spark container
    
-## **Hive metastore Container**
+## Hive metastore Container
 
 **External Hive Metastore** backed by PostgreSQL in a dedicated container
   - `hive-site.xml` configured for:
@@ -195,7 +195,7 @@ This container runs the below three services:
     - Metastore host/port
     - Shared warehouse location
 
-## Container Orchestration
+## **Container Orchestration**
 
 - `docker-compose.yml` wires together all services
 - Readiness checks ensure proper startup order
@@ -203,7 +203,7 @@ This container runs the below three services:
 
 ---
 
-## DBR underlying Spark OSS Compatible Branches
+## **DBR underlying Spark OSS Compatible Branches**
 
 Branches are curated to align with **Databricks Runtime (DBR)** and underlying **OSS Spark** versions.
 
@@ -269,7 +269,7 @@ Branches are curated to align with **Databricks Runtime (DBR)** and underlying *
 
 ---
 
-## What Makes This Different
+## **What Makes This Different**
 
 There are many Spark Docker images, but this project specifically targets **data platform engineers, SREs,support engineers,developers** working on real world pipelines involiving data analytcis.
 
@@ -298,7 +298,7 @@ You get a <strong>full analytics node</strong>: Spark + HDFS + Hive Metastore + 
 
 ---
 
-## Use Cases
+## **Use Cases**
 
 ### 1. Reproducing Databricks / DBR Behavior Locally
 
@@ -410,7 +410,7 @@ You get a <strong>full analytics node</strong>: Spark + HDFS + Hive Metastore + 
 
 ---
 
-# Getting Started
+# **Getting Started**
 
 ### Prerequisites
 
@@ -476,7 +476,7 @@ You should see two containers:
 
 ---
 
-# How to use
+# **How to use**
 
 ### Connect to the Spark container using the below command:
 
@@ -544,7 +544,7 @@ SELECT * FROM employees LIMIT 10;
 
 ---
 
-## Extending the Stack
+## **Extending the Stack**
 
 Common extension patterns:
 
@@ -590,7 +590,7 @@ services:
 ---
 
 
-# Project Layout
+# **Project Layout**
 
 ```text
 spark-with-hadoop-anywhere/
@@ -606,7 +606,7 @@ spark-with-hadoop-anywhere/
 
 ---
 
-## Limitations
+## **Limitations**
 
 - **Not a production deployment template**: No HA, no multi-node replication, no built-in security hardening
 - **Single-node semantics**: Useful for functional correctness, less representative for large-scale performance testing
@@ -615,7 +615,7 @@ spark-with-hadoop-anywhere/
 
 ---
 
-## Author
+## **Author**
 
 **Anudeep Konaboina**
 

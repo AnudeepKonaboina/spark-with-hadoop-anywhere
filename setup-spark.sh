@@ -176,22 +176,22 @@ health_check() {
   local SPARK_OK=false
   local HIVE_OK=false
   # HDFS: retry up to ~60s, ensure safemode OFF and command works
-  for i in {1..60}; do
+  for i in {1..6}; do
     if docker exec "$container" bash -lc 'hdfs dfsadmin -safemode get 2>/dev/null | grep -q OFF && hdfs dfs -ls / >/dev/null 2>&1' 2>/dev/null; then
       HDFS_OK=true
       break
     fi
-    sleep 1
+    sleep 10
   done
   if [ "$HDFS_OK" = true ]; then echo "  ✓ HDFS healthy"; else echo "  ✗ HDFS not ready"; fi
 
   # Spark: retry up to ~60s
-  for i in {1..60}; do
+  for i in {1..6}; do
     if docker exec "$container" bash -lc 'spark-submit --version >/dev/null 2>&1' 2>/dev/null; then
       SPARK_OK=true
       break
     fi
-    sleep 1
+    sleep 10
   done
   if [ "$SPARK_OK" = true ]; then echo "  ✓ Spark healthy"; else echo "  ✗ Spark not ready"; fi
 
@@ -201,6 +201,7 @@ health_check() {
       HIVE_OK=true
       break
     fi
+    sleep 10
   done
   if [ "$HIVE_OK" = true ]; then
     echo "  ✓ Hive healthy"
@@ -278,6 +279,26 @@ if [ "$MODE" = "single" ]; then
 else
   echo ""
   echo "=================================================="
+  # Self-heal HDFS on multi-node if NameNode is not responding or has incompatible layout (no rebuild)
+  docker exec -i spark-master bash -lc '
+    set -e
+    # If NN RPC or safemode query fails, attempt clean re-init (handles incompatible old layout)
+    if ! hdfs dfsadmin -safemode get >/dev/null 2>&1; then
+      export HDFS_NAMENODE_USER=root HDFS_DATANODE_USER=root HDFS_SECONDARYNAMENODE_USER=root
+      (stop-dfs.sh || true) >/dev/null 2>&1 || true
+      rm -rf /usr/bin/data/nameNode/* /usr/bin/data/nameNodeSecondary/* /usr/bin/data/dataNode/* || true
+      hdfs namenode -format -force -nonInteractive
+      start-dfs.sh
+    fi
+    # Wait for RPC port and safemode OFF (max ~120s)
+    for i in {1..120}; do (echo > /dev/tcp/hadoop.spark/9000) >/dev/null 2>&1 && break; sleep 1; done
+    for i in {1..120}; do hdfs dfsadmin -safemode get 2>/dev/null | grep -q OFF && break; sleep 1; done
+    # Ensure Hive dirs exist
+    hdfs dfs -mkdir -p /tmp /user/hive/warehouse || true
+    hdfs dfs -chmod 1777 /tmp || true
+    hdfs dfs -chmod g+w /user/hive/warehouse || true
+  ' 2>/dev/null || true
+
   # Basic health checks for multi-node (run against spark-master)
   health_check spark-master
   echo ""

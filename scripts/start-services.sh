@@ -26,6 +26,14 @@ for i in {1..60}; do
   sleep 1
 done
 
+# Additionally wait for HDFS to exit safemode (max ~120s)
+for i in {1..120}; do
+  if hdfs dfsadmin -safemode get 2>/dev/null | grep -q OFF; then
+    break
+  fi
+  sleep 1
+done
+
 # Prepare HDFS directories for Hive
 hdfs dfs -mkdir -p /tmp || true
 hdfs dfs -chmod 1777 /tmp || true
@@ -65,10 +73,11 @@ if command -v schematool >/dev/null 2>&1; then
   schematool -dbType postgres -initSchema -ifNotExists -verbose || true
 fi
 
-# Start Hive Metastore and HiveServer2
-hive --service metastore &
+# Start Hive Metastore and HiveServer2 with logs
+mkdir -p /tmp/root >/dev/null 2>&1 || true
+nohup hive --service metastore >/tmp/root/metastore.log 2>&1 & disown
 sleep 15
-hive --service hiveserver2 &
+nohup hive --service hiveserver2 >/tmp/root/hiveserver2.log 2>&1 & disown
 
 # Keep the container running
 tail -f /dev/null

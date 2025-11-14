@@ -71,32 +71,62 @@ print_section() {
 
 BUILD_MODE=false
 RUN_MODE=false
+STOP_MODE=false
+MODE="single" # single | multi
 
 while [[ $# -gt 0 ]]; do
   case $1 in
     --build) BUILD_MODE=true; shift ;;
     --run) RUN_MODE=true; shift ;;
+    --stop) STOP_MODE=true; shift ;;
+    --node-type=*) MODE="${1#*=}"; shift ;;
+    --node-type)
+      if [[ -z "${2:-}" ]]; then
+        echo "Error: --node-type requires a value: single|multi"; exit 1
+      fi
+      MODE="$2"; shift 2 ;;
     *)
       echo "Error: Unknown option '$1'"
       echo ""
-      echo "Usage: $0 [--build] [--run]"
-      echo "  --run         : Pull images from DockerHub (fast)"
-      echo "  --build --run : Build images locally (slow, for development)"
+      echo "Usage: $0 [--build] [--run] [--stop] [--node-type single|multi]"
+      echo "  --run                 : Pull images from DockerHub (fast)"
+      echo "  --build --run         : Build images locally (slow, for development)"
+      echo "  --stop                : Stop and remove the selected stack"
+      echo "Optional:"
+      echo "  --node-type single    : Single container (default)"
+      echo "  --node-type multi     : Spark master + workers"
       exit 1
       ;;
   esac
 done
 
 # Validate arguments
-if [ "$RUN_MODE" = false ]; then
-  echo "Error: Please specify --run"
-  echo "Usage: $0 [--build] --run"
+if [ "$RUN_MODE" = false ] && [ "$STOP_MODE" = false ]; then
+  echo "Error: Please specify --run or --stop"
+  echo "Usage: $0 [--build] --run | --stop [--node-type single|multi]"
   exit 1
 fi
 
 if [ "$BUILD_MODE" = true ] && [ "$RUN_MODE" = false ]; then
   echo "Error: --build requires --run"
   exit 1
+fi
+
+# -----------------------------------------------------------------------------
+# Early stop
+# -----------------------------------------------------------------------------
+if [ "$STOP_MODE" = true ]; then
+  print_section "Stopping services (auto-detected)"
+  if docker ps --format '{{.Names}}' | grep -q '^spark$'; then
+    docker-compose -f docker-compose.single.yml down
+  elif docker ps --format '{{.Names}}' | grep -q '^spark-master$'; then
+    docker-compose -f docker-compose.yml down
+  else
+    docker-compose -f docker-compose.single.yml down || true
+    docker-compose -f docker-compose.yml down || true
+  fi
+  echo "Done."
+  exit 0
 fi
 
 # -----------------------------------------------------------------------------
@@ -122,62 +152,74 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# Step 2: Start Containers
+# Step 2: Start Containers (single or multi)
 # -----------------------------------------------------------------------------
 
 print_section "Starting containers"
-docker-compose up -d
+COMPOSE_FILE="docker-compose.single.yml"
+if [ "$MODE" = "multi" ]; then
+  COMPOSE_FILE="docker-compose.yml"
+fi
+docker-compose -f "$COMPOSE_FILE" up -d --remove-orphans
 
-# Wait for containers to be running
-wait_for_condition "containers" \
-  "docker inspect -f '{{.State.Status}}' spark 2>/dev/null | grep -q running && \
-   docker inspect -f '{{.State.Status}}' hive_metastore 2>/dev/null | grep -q running" \
-  30 2
-
-# -----------------------------------------------------------------------------
-# Step 3: Initialize HDFS
-# -----------------------------------------------------------------------------
-
-print_section "Initializing HDFS"
-docker exec spark bash -c '
-  hdfs namenode -format -force &&
-  HDFS_NAMENODE_USER=root HDFS_DATANODE_USER=root HDFS_SECONDARYNAMENODE_USER=root start-dfs.sh &&
-  sleep 5 &&
-  hdfs dfs -mkdir -p /tmp &&
-  hdfs dfs -mkdir -p /user/hive/warehouse &&
-  hdfs dfs -chmod g+w /user/hive/warehouse
-' >/dev/null 2>&1 || true
-echo "✓ HDFS initialized"
-
-# -----------------------------------------------------------------------------
-# Step 4: Initialize Hive Metastore Schema
-# -----------------------------------------------------------------------------
-
-echo ""
-echo "Waiting for PostgreSQL to be ready..."
-
-# Wait for PostgreSQL (critical for schema initialization)
-for i in $(seq 1 20); do
-  if docker exec hive_metastore pg_isready -U hive -d metastore >/dev/null 2>&1; then
-    # PostgreSQL is accepting connections, wait extra time for full initialization
-    # This is critical - PostgreSQL needs time to fully initialize the database
-    echo "PostgreSQL responding, waiting for full initialization..."
-    sleep 15
-    echo "✓ PostgreSQL ready"
-    break
-  fi
-  sleep 2
-done
-
-echo "Checking Hive metastore schema..."
-
-# Check if schema already exists
-SCHEMA_CHECK=$(docker exec spark bash -c 'schematool -dbType postgres -info 2>&1 | grep "Metastore schema version"' || echo "")
-
-if [ -n "$SCHEMA_CHECK" ]; then
-  echo "✓ Hive schema already exists"
+if [ "$MODE" = "single" ]; then
+  # Wait for containers to be running
+  wait_for_condition "containers" \
+    "docker inspect -f '{{.State.Status}}' spark 2>/dev/null | grep -q running && \
+     docker inspect -f '{{.State.Status}}' hive_metastore 2>/dev/null | grep -q running" \
+    30 2
 else
-  echo "Initializing Hive schema (this takes ~20 seconds)..."
+  wait_for_condition "containers" \
+    "docker inspect -f '{{.State.Status}}' spark-master 2>/dev/null | grep -q running && \
+     docker inspect -f '{{.State.Status}}' hive_metastore 2>/dev/null | grep -q running" \
+    30 2
+fi
+
+# -----------------------------------------------------------------------------
+# Step 3: Initialize HDFS (single only)
+# -----------------------------------------------------------------------------
+
+if [ "$MODE" = "single" ]; then
+  print_section "Initializing HDFS"
+  docker exec spark bash -c '
+    hdfs namenode -format -force &&
+    HDFS_NAMENODE_USER=root HDFS_DATANODE_USER=root HDFS_SECONDARYNAMENODE_USER=root start-dfs.sh &&
+    sleep 5 &&
+    hdfs dfs -mkdir -p /tmp &&
+    hdfs dfs -mkdir -p /user/hive/warehouse &&
+    hdfs dfs -chmod g+w /user/hive/warehouse
+  ' >/dev/null 2>&1 || true
+  echo "✓ HDFS initialized"
+fi
+
+# -----------------------------------------------------------------------------
+# Step 4: Initialize Hive Metastore Schema (single only)
+# -----------------------------------------------------------------------------
+
+if [ "$MODE" = "single" ]; then
+  echo ""
+  echo "Waiting for PostgreSQL to be ready..."
+
+  # Wait for PostgreSQL (critical for schema initialization)
+  for i in $(seq 1 20); do
+    if docker exec hive_metastore pg_isready -U hive -d metastore >/dev/null 2>&1; then
+      echo "PostgreSQL responding, waiting for full initialization..."
+      sleep 15
+      echo "✓ PostgreSQL ready"
+      break
+    fi
+    sleep 2
+  done
+
+  echo "Checking Hive metastore schema..."
+
+  # Check if schema already exists
+  SCHEMA_CHECK=$(docker exec spark bash -c 'schematool -dbType postgres -info 2>&1 | grep "Metastore schema version"' || echo "")
+
+  if [ -n "$SCHEMA_CHECK" ]; then
+    echo "✓ Hive schema already exists"
+  else
+    echo "Initializing Hive schema (this takes ~20 seconds)..."
   docker exec spark bash -c 'schematool -dbType postgres -initSchema' >/dev/null 2>&1
   
   # Verify initialization succeeded

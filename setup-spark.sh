@@ -81,10 +81,12 @@ while [[ $# -gt 0 ]]; do
     --stop) STOP_MODE=true; shift ;;
     --node-type=*) MODE="${1#*=}"; shift ;;
     --node-type)
-      if [[ -z "${2:-}" ]]; then
+      if [ "${2:-}" = "" ]; then
         echo "Error: --node-type requires a value: single|multi"; exit 1
       fi
       MODE="$2"; shift 2 ;;
+    --single) MODE="single"; shift ;;
+    --multi) MODE="multi"; shift ;;
     *)
       echo "Error: Unknown option '$1'"
       echo ""

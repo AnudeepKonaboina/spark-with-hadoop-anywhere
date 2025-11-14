@@ -175,6 +175,18 @@ health_check() {
   local HDFS_OK=false
   local SPARK_OK=false
   local HIVE_OK=false
+  # Self-heal HDFS (multi-node) if NN is not reachable or has incompatible layout; no image rebuild needed
+  if [ "$container" = "spark-master" ]; then
+    docker exec "$container" bash -lc '
+      if ! hdfs dfsadmin -safemode get >/dev/null 2>&1; then
+        export HDFS_NAMENODE_USER=root HDFS_DATANODE_USER=root HDFS_SECONDARYNAMENODE_USER=root
+        (stop-dfs.sh || true) >/dev/null 2>&1 || true
+        rm -rf /usr/bin/data/nameNode/* /usr/bin/data/nameNodeSecondary/* /usr/bin/data/dataNode/* || true
+        hdfs namenode -format -force -nonInteractive >/dev/null 2>&1 || true
+        start-dfs.sh >/dev/null 2>&1 || true
+      fi
+    ' 2>/dev/null || true
+  fi
   # HDFS: retry up to ~60s, ensure safemode OFF and command works
   for i in {1..6}; do
     if docker exec "$container" bash -lc 'hdfs dfsadmin -safemode get 2>/dev/null | grep -q OFF && hdfs dfs -ls / >/dev/null 2>&1' 2>/dev/null; then
@@ -244,8 +256,8 @@ docker-compose -f "$COMPOSE_FILE" up -d
 if [ "$MODE" = "single" ]; then
   # Initialize HDFS and Hive warehouse dirs
   docker exec -i spark bash -lc '
-    hdfs namenode -format -force &&
-    start-dfs.sh &&
+      hdfs namenode -format -force >/dev/null 2>&1 || true &&
+      start-dfs.sh >/dev/null 2>&1 || true &&
     hdfs dfs -mkdir -p /tmp &&
     hdfs dfs -mkdir -p /user/hive/warehouse &&
     hdfs dfs -chmod g+w /user/hive/warehouse
@@ -287,8 +299,8 @@ else
       export HDFS_NAMENODE_USER=root HDFS_DATANODE_USER=root HDFS_SECONDARYNAMENODE_USER=root
       (stop-dfs.sh || true) >/dev/null 2>&1 || true
       rm -rf /usr/bin/data/nameNode/* /usr/bin/data/nameNodeSecondary/* /usr/bin/data/dataNode/* || true
-      hdfs namenode -format -force -nonInteractive
-      start-dfs.sh
+      hdfs namenode -format -force -nonInteractive >/dev/null 2>&1 || true
+      start-dfs.sh >/dev/null 2>&1 || true
     fi
     # Wait for RPC port and safemode OFF (max ~120s)
     for i in {1..120}; do (echo > /dev/tcp/hadoop.spark/9000) >/dev/null 2>&1 && break; sleep 1; done

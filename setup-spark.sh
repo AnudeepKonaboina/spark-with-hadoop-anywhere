@@ -219,6 +219,24 @@ health_check() {
     echo "  ✓ Hive healthy"
   else
     echo "  ✗ Hive not ready"
+    # Extended Hive diagnostics (ports and processes)
+    echo "    > Running extended Hive checks..."
+    if docker exec "$container" bash -lc 'ss -tulpn 2>/dev/null | grep -q ":9083"'; then
+      echo "      ✓ Metastore listening on :9083"
+    else
+      echo "      ✗ Metastore not listening on :9083"
+      docker exec "$container" bash -lc 'ps aux | grep -E "metastore.HiveMetaStore" | grep -v grep >/dev/null' 2>/dev/null \
+        && echo "      • Metastore process present but port not open (initializing?)" \
+        || echo "      • Metastore process not detected (check /tmp/root/metastore.log)"
+    fi
+    if docker exec "$container" bash -lc 'ss -tulpn 2>/dev/null | grep -q ":10000"'; then
+      echo "      ✓ HiveServer2 listening on :10000"
+    else
+      echo "      ✗ HiveServer2 not listening on :10000"
+      docker exec "$container" bash -lc 'ps aux | grep -E "HiveServer2" | grep -v grep >/dev/null' 2>/dev/null \
+        && echo "      • HiveServer2 process present but port not open (initializing?)" \
+        || echo "      • HiveServer2 process not detected (check /tmp/root/hiveserver2.log)"
+    fi
   fi
   echo "Health checks complete!"
   echo ""

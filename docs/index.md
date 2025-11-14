@@ -296,6 +296,20 @@ You get a <strong>full analytics node</strong>: Spark + HDFS + Hive Metastore + 
 - No hidden global dependencies; everything is in containers and repo
 - Easy to zip up as a minimal reproducible environment
 
+### 4. Pre-built Docker Images
+
+All Spark/Hadoop/Hive combinations are pre-built and available on **DockerHub**: [docker4ops/spark-with-hadoop](https://hub.docker.com/r/docker4ops/spark-with-hadoop)
+
+- **Zero build time**: Pull and run in seconds
+- **Consistent images**: Same image works across all machines
+- **Multiple tags**: Each branch has a corresponding Docker image tag
+- **Always available**: No dependency on building from source
+
+Example tags:
+- `spark-3.5.7_hadoop-3.3.6_hive-4.0.0`
+- `spark-3.5.2_hadoop-3.3.6_hive-4.0.0_scala-2.12`
+- `spark-4.0.0_hadoop-3.4.1_hive-4.0.1`
+
 ---
 
 ## **Some Use Cases**
@@ -446,22 +460,28 @@ echo "<your_strong_password_here>" > secrets/postgres_password.txt
 
 There are two ways of running the setup script
 
-**Option A: Uses prebuilt images from docker hub (fast setup and recommended)**
+**Option A: Use prebuilt images from DockerHub (fast setup and recommended)**
 
-```
+All images are pre-built and available on DockerHub: [docker4ops/spark-with-hadoop](https://hub.docker.com/r/docker4ops/spark-with-hadoop)
+
+```bash
 sh setup-spark.sh --run
 ```
 
-**Option B: Build's images locally**
+This pulls pre-built images and starts the stack in seconds. Perfect for quick testing and development.
 
-```
+**Option B: Build images locally**
+
+```bash
 sh setup-spark.sh --build --run
 ```
+
+Build from source if you want to customize the Dockerfile or add additional packages.
 
 This will:
 - Build/pull Docker images
 - Start containers using Docker Compose
-- Initializes Spark,HDFS and Hive Metastore
+- Initialize Spark, HDFS, and Hive Metastore
 - Verify all services are healthy
 
 ### Step-4: Verify Running Containers

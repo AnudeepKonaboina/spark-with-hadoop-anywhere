@@ -39,7 +39,7 @@ wait_for_condition() {
   local timeout=$3
   local interval=${4:-3}
   
-  echo "[+] Waiting for $description"
+  info "Waiting for $description"
   local elapsed=0
   
   while [ $elapsed -lt $timeout ]; do
@@ -67,6 +67,18 @@ print_section() {
   echo "$1"
   echo "=================================================="
 }
+ 
+ # -----------------------------------------------------------------------------
+ # Colored output helpers
+ # -----------------------------------------------------------------------------
+ # ANSI colors (disable if not a TTY)
+ RESET="\033[0m"; GREEN="\033[32m"
+ if [ ! -t 1 ]; then RESET=""; GREEN=""; fi
+ 
+ info() {
+   # Print a colored [+] prefix followed by the message
+   printf "%b[+]%b %s\n" "$GREEN" "$RESET" "$*"
+ }
 
 # -----------------------------------------------------------------------------
 # CLI Argument Parsing
@@ -229,7 +241,7 @@ wait_for_condition "containers ($PRIMARY_CONTAINER, $METASTORE_DB_CONTAINER) to 
 
 # Step 1: Initialize HDFS (format + start-dfs)
 echo ""
-echo "[+] Initializing HDFS on $PRIMARY_CONTAINER"
+info "Initializing HDFS on $PRIMARY_CONTAINER"
 docker exec "$PRIMARY_CONTAINER" bash -c '
   hdfs namenode -format -force &&
   HDFS_NAMENODE_USER=root HDFS_DATANODE_USER=root HDFS_SECONDARYNAMENODE_USER=root start-dfs.sh &&
@@ -242,7 +254,7 @@ echo "✓ HDFS initialization completed on $PRIMARY_CONTAINER"
 
 # Step 2: Initialize Hive Metastore Schema (Postgres)
 echo ""
-echo "[+] Waiting for Hive Metastore PostgreSQL ($METASTORE_DB_CONTAINER) to be ready..."
+info "Waiting for Hive Metastore PostgreSQL ($METASTORE_DB_CONTAINER) to be ready..."
 
 for _ in $(seq 1 20); do
   if docker exec "$METASTORE_DB_CONTAINER" pg_isready -U hive -d metastore >/dev/null 2>&1; then
@@ -255,7 +267,7 @@ for _ in $(seq 1 20); do
 done
 
 echo ""
-echo "[+]Checking Hive metastore schema"
+info "Checking Hive metastore schema"
 
 SCHEMA_CHECK=$(docker exec "$PRIMARY_CONTAINER" bash -c 'schematool -dbType postgres -info 2>&1 | grep "Metastore schema version"' || echo "")
 
@@ -284,7 +296,7 @@ fi
 
 # Step 3: Start Hive Metastore + HiveServer2 in PRIMARY_CONTAINER
 echo ""
-echo "[+] Starting Hive Metastore and HiveServer2 on $PRIMARY_CONTAINER"
+info "Starting Hive Metastore and HiveServer2 on $PRIMARY_CONTAINER"
 
 set +e
 
@@ -360,7 +372,7 @@ set -e
 # -----------------------------------------------------------------------------
 echo ""
 echo "=============================================="
-echo "[+] Running final health checks on $PRIMARY_CONTAINER"
+info "Running final health checks on $PRIMARY_CONTAINER"
 
 ERRORS=()
 
@@ -421,7 +433,7 @@ else
   fi
 fi
 
-echo "[+] All services are Healthy"
+info "All services are Healthy"
 
 # -----------------------------------------------------------------------------
 # Show Results
@@ -430,18 +442,18 @@ echo "[+] All services are Healthy"
 if [ ${#ERRORS[@]} -eq 0 ]; then
   echo ""
   echo "============================================================"
-  echo "[+] Spark with Hadoop setup completed successfully !"
+  info "Spark with Hadoop setup completed successfully !"
   echo "============================================================"
   echo ""
   if [ "$MODE" = "single" ]; then
-    echo "[+] Connect to the Spark container using:"
+    info "Connect to the Spark container using:"
     echo "    docker exec -it spark bash"
   else
-    echo "[+] Connect to the Spark master container:"
+    info "Connect to the Spark master container:"
     echo "    docker exec -it spark-master bash"
   fi
   echo ""
-  echo "[+] Useful commands inside container:"
+  info "Useful commands inside container:"
   if [ "$MODE" = "single" ]; then
     echo "  - Spark Shell   : spark-shell"
     echo "  - PySpark       : pyspark"

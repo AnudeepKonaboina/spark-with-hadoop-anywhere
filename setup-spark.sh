@@ -12,10 +12,11 @@ fi
 # Requirements: Docker, Docker Compose
 # 
 # Usage:
-#   ./setup-spark.sh --run                       # Pull images from DockerHub
-#   ./setup-spark.sh --build --run               # Build images locally
-#   ./setup-spark.sh --stop                      # Stop & cleanup
-#   ./setup-spark.sh --run --node-type multi     # Multi-node cluster
+#   ./setup-spark.sh --run                                # Pull images from DockerHub
+#   ./setup-spark.sh --build --run                        # Build images locally
+#   ./setup-spark.sh --run --node-type {multi|single}     # Multi-node cluster
+#   ./setup-spark.sh --stop                               # Stop & cleanup
+
 #
 # Components:
 #   - Java 17 (Adoptium Temurin)
@@ -38,7 +39,7 @@ wait_for_condition() {
   local timeout=$3
   local interval=${4:-3}
   
-  echo "[+]Waiting for $description"
+  echo "[+] Waiting for $description"
   local elapsed=0
   
   while [ $elapsed -lt $timeout ]; do
@@ -227,7 +228,8 @@ wait_for_condition "containers ($PRIMARY_CONTAINER, $METASTORE_DB_CONTAINER) to 
   60 2
 
 # Step 1: Initialize HDFS (format + start-dfs)
-echo "[+]Initializing HDFS on $PRIMARY_CONTAINER"
+echo ""
+echo "[+] Initializing HDFS on $PRIMARY_CONTAINER"
 docker exec "$PRIMARY_CONTAINER" bash -c '
   hdfs namenode -format -force &&
   HDFS_NAMENODE_USER=root HDFS_DATANODE_USER=root HDFS_SECONDARYNAMENODE_USER=root start-dfs.sh &&
@@ -252,7 +254,8 @@ for _ in $(seq 1 20); do
   sleep 2
 done
 
-echo "[+]Checking Hive metastore schema..."
+echo ""
+echo "[+]Checking Hive metastore schema"
 
 SCHEMA_CHECK=$(docker exec "$PRIMARY_CONTAINER" bash -c 'schematool -dbType postgres -info 2>&1 | grep "Metastore schema version"' || echo "")
 
@@ -357,7 +360,7 @@ set -e
 # -----------------------------------------------------------------------------
 echo ""
 echo "=============================================="
-echo "[+] Running final health checks on $PRIMARY_CONTAINER..."
+echo "[+] Running final health checks on $PRIMARY_CONTAINER"
 
 ERRORS=()
 
@@ -418,6 +421,8 @@ else
   fi
 fi
 
+echo "[+] All services are Healthy"
+
 # -----------------------------------------------------------------------------
 # Show Results
 # -----------------------------------------------------------------------------
@@ -429,7 +434,7 @@ if [ ${#ERRORS[@]} -eq 0 ]; then
   echo "============================================================"
   echo ""
   if [ "$MODE" = "single" ]; then
-    echo "[+] Connect to the Spark container:"
+    echo "[+] Connect to the Spark container using:"
     echo "    docker exec -it spark bash"
   else
     echo "[+] Connect to the Spark master container:"

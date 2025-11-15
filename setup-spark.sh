@@ -5,35 +5,96 @@
 # =============================================================================
 # Description: Sets up Spark 2.4.7 with Hadoop 2.10.1 and Hive 2.1.1
 # Requirements: Docker, Docker Compose
-# 
+#
 # Usage:
-#   ./setup-spark.sh --run              # Pull images from DockerHub
-#   ./setup-spark.sh --build --run      # Build images locally
+#   sh setup-spark.sh [OPTIONS]
+#
+#   Required:
+#     --run                       Pull images from Docker Hub and run
+#     --build --run               Build images locally and run
+#
+#   Optional:
+#     --node-type {single|multi}  Single or multi-node cluster (default: single)
+#     --stop                      Stop & clean up containers and images
+#     --help                      Show this help message
 #
 # Components:
 #   - Java 8 
-#   - Spark 2.4.7 (Scala 2.11)
-#   - Hadoop 2.10.1
-#   - Hive 2.1.1
+#   - Spark 3.4.1 (Scala 2.12)
+#   - Hadoop 3.3.6
+#   - Hive 3.1.3
 #   - PostgreSQL metastore
 # =============================================================================
 
 set -euo pipefail
+
 if [ -z "${BASH_VERSION:-}" ]; then
   echo "This script requires bash. Run: bash $0 [--build] [--run] [--node-type single|multi]"
   exit 1
 fi
 
 # -----------------------------------------------------------------------------
+# Helper output functions
+# -----------------------------------------------------------------------------
+
+# ANSI colors (disable if not a TTY)
+RESET="\033[0m"
+GREEN="\033[32m"
+if [ ! -t 1 ]; then
+  RESET=""
+  GREEN=""
+fi
+
+info() {
+  # Colored INFO: [+] prefix for key steps
+  printf "%bINFO: [+]%b %s\n" "$GREEN" "$RESET" "$*"
+}
+
+print_section() {
+  echo ""
+  echo "=================================================="
+  echo "$1"
+  echo "=================================================="
+}
+
+show_help() {
+  cat <<EOF
+Usage: $0 [--build] [--run] [--stop] [--node-type single|multi] [--help]
+
+Required:
+  --run                 Pull images from Docker Hub and run (preferred)
+  --build --run         Build images locally and run
+
+Optional:
+  --node-type single    Single container / single node cluster (default)
+  --node-type multi     Spark master + workers / multi node cluster
+  --stop                Stop and remove the selected stack (and images)
+  --help                Show this help message
+
+Examples:
+  $0 --run
+  $0 --build --run
+  $0 --run --node-type multi
+  $0 --stop
+EOF
+}
+
+# -----------------------------------------------------------------------------
 # Parse command line arguments
 # -----------------------------------------------------------------------------
+
 BUILD_MODE=false
 RUN_MODE=false
 STOP_MODE=false
 MODE="single" # single | multi
+HELP=false
 
 while [ $# -gt 0 ]; do
   case "$1" in
+    --help)
+      HELP=true
+      shift
+      ;;
     --build)
       BUILD_MODE=true
       shift
@@ -68,45 +129,55 @@ while [ $# -gt 0 ]; do
       ;;
     *)
       echo "Unknown option: $1"
-      echo "Usage: $0 [--build] [--run] [--stop] [--node-type single|multi]"
-      echo "  --run                 : Pull images from Docker Hub and run(preferred)"
-      echo "  --build --run         : Build images locally and run"
-      echo "  --stop                : Stop and remove the selected stack"
-      echo " Optional arguments:"
-      echo "  --node-type single    : Single container/Single node cluster(default)"
-      echo "  --node-type multi     : Spark master + workers containers/Multi node cluster"
+      echo ""
+      show_help
       exit 1
       ;;
   esac
 done
 
-# Validate arguments
+if [ "$HELP" = true ]; then
+  show_help
+  exit 0
+fi
+
+# -----------------------------------------------------------------------------
+# Validate node-type
+# -----------------------------------------------------------------------------
+
+if [ "$MODE" != "single" ] && [ "$MODE" != "multi" ]; then
+  echo "Error: Invalid --node-type value: '$MODE'"
+  echo "Allowed values: single, multi"
+  echo ""
+  show_help
+  exit 1
+fi
+
+# -----------------------------------------------------------------------------
+# Validate other arguments
+# -----------------------------------------------------------------------------
+
 if [ "$BUILD_MODE" = false ] && [ "$RUN_MODE" = false ] && [ "$STOP_MODE" = false ]; then
   echo "Error: Please specify --run or --build --run or --stop"
-  echo "Usage: $0 [--build] [--run] [--stop] [--node-type single|multi]"
-  echo "  --run                 : Pull images from Docker Hub and run(preferred)"
-  echo "  --build --run         : Build images locally and run"
-  echo "  --stop                : Stop and remove the selected stack"
-  echo " Optional arguments:"
-  echo "  --node-type single    : Single container/Single node cluster(default)"
-  echo "  --node-type multi     : Spark master + workers cluster/Multi node cluster"
+  echo ""
+  show_help
   exit 1
 fi
 
 if [ "$BUILD_MODE" = true ] && [ "$RUN_MODE" = false ]; then
   echo "Error: --build must be used with --run"
-  echo "Usage: $0 --build --run"
+  echo ""
+  echo "Example: $0 --build --run"
   exit 1
 fi
 
 # -----------------------------------------------------------------------------
-# Early stop: select compose file and bring the stack down
+# Stop the services: select compose file and bring the stack down
 # -----------------------------------------------------------------------------
+
 if [ "$STOP_MODE" = true ]; then
-  echo ""
-  echo "=================================================="
-  echo "Stopping services (auto-detected):"
-  echo "=================================================="
+  print_section "Stopping services (auto-detected)"
+
   # Auto-detect running stack by container names
   if docker ps --format '{{.Names}}' | grep -q '^spark$'; then
     echo "[single] Detected 'spark' container. Bringing down docker-compose.single.yml..."
@@ -121,10 +192,11 @@ if [ "$STOP_MODE" = true ]; then
   fi
   echo ""
   echo "Removing all Docker images (this may take a while)..."
-  # Remove all images; ignore errors if none exist
   docker rmi -f $(docker images -a -q) >/dev/null 2>&1 || true
+
   echo "Pruning Docker system (networks, caches, etc.)..."
   docker system prune -f >/dev/null 2>&1 || true
+
   echo "Done."
   exit 0
 fi
@@ -132,12 +204,12 @@ fi
 # -----------------------------------------------------------------------------
 # Build or Pull images
 # -----------------------------------------------------------------------------
+
 if [ "$BUILD_MODE" = true ]; then
-  echo "=================================================="
-  echo "Building images locally..."
-  echo "=================================================="
-  
-  # Build with local tag
+  echo ""
+  echo "**** This setup may take around 10–15 minutes... grab a coffee or tea and relax! ****"
+  print_section "Building images locally"
+
   docker build -t hive-metastore:local \
     -f hive-metastore/Dockerfile .
   
@@ -145,15 +217,14 @@ if [ "$BUILD_MODE" = true ]; then
     -f spark-hadoop-standalone/Dockerfile .
   
   echo "Build complete!"
-  
-  # Set environment variables to use local images
+
   export HIVE_METASTORE_IMAGE="hive-metastore:local"
   export SPARK_HADOOP_IMAGE="spark-with-hadoop:local"
 else
-  echo "=================================================="
-  echo "Pulling images from Docker Hub..."
-  echo "=================================================="
-  
+  echo ""
+  echo "**** This setup may take around 5–7 minutes... grab a coffee or tea and relax! ****"
+  print_section "Pulling images from Docker Hub"
+
   docker pull docker4ops/hive-metastore:hive-3.1.3
   docker pull docker4ops/spark-with-hadoop:spark-3.4.1_hadoop-3.3.6_hive-3.1.3
 
@@ -167,70 +238,71 @@ fi
 # -----------------------------------------------------------------------------
 # Health check helper
 # -----------------------------------------------------------------------------
+
 health_check() {
   local container="$1"
-  echo "Waiting 10 seconds for containers to completely start before health checks..."
+  echo ""
+  info "Waiting 10 seconds for containers to completely start before health checks..."
   sleep 10
-  echo "Starting health checks..."
+
+  info "Starting health checks for all services"
   local HDFS_OK=false
   local SPARK_OK=false
   local HIVE_OK=false
-  # Self-heal HDFS (multi-node) if NN is not reachable or has incompatible layout; no image rebuild needed
-  if [ "$container" = "spark-master" ]; then
-    docker exec "$container" bash -lc '
-      if ! hdfs dfsadmin -safemode get >/dev/null 2>&1; then
-        export HDFS_NAMENODE_USER=root HDFS_DATANODE_USER=root HDFS_SECONDARYNAMENODE_USER=root
-        (stop-dfs.sh || true) >/dev/null 2>&1 || true
-        rm -rf /usr/bin/data/nameNode/* /usr/bin/data/nameNodeSecondary/* /usr/bin/data/dataNode/* || true
-        hdfs namenode -format -force -nonInteractive >/dev/null 2>&1 || true
-        start-dfs.sh >/dev/null 2>&1 || true
-      fi
-    ' 2>/dev/null || true
-  fi
-  # HDFS: retry up to ~60s, ensure safemode OFF and command works
-  for i in {1..6}; do
-    if docker exec "$container" bash -lc 'hdfs dfsadmin -safemode get 2>/dev/null | grep -q OFF && hdfs dfs -ls / >/dev/null 2>&1' 2>/dev/null; then
+
+  echo "        Testing HDFS..."
+  for _ in {1..6}; do
+    if docker exec "$container" bash -lc 'timeout 10s hdfs dfs -ls / >/dev/null 2>&1' 2>/dev/null; then
       HDFS_OK=true
+      echo "        ✓ HDFS ready"
       break
+    else
+      echo "       Waiting for HDFS to be ready..."
+      sleep 10
     fi
-    sleep 10
   done
-  if [ "$HDFS_OK" = true ]; then echo "  ✓ HDFS healthy"; else echo "  ✗ HDFS not ready"; fi
-
-  # Spark: retry up to ~60s
-  for i in {1..6}; do
-    if docker exec "$container" bash -lc 'spark-submit --version >/dev/null 2>&1' 2>/dev/null; then
-      SPARK_OK=true
-      break
-    fi
-    sleep 10
-  done
-  if [ "$SPARK_OK" = true ]; then echo "  ✓ Spark healthy"; else echo "  ✗ Spark not ready"; fi
-
-  # Hive: retry up to ~60s (6 attempts x 10s timeout each)
-  for i in {1..6}; do
-    if docker exec "$container" bash -lc 'timeout 10s hive -e "show databases;" >/dev/null 2>&1' 2>/dev/null; then
-      HIVE_OK=true
-      break
-    fi
-    sleep 10
-  done
-  if [ "$HIVE_OK" = true ]; then
-    echo "  ✓ Hive healthy"
-  else
-    echo "  ✗ Hive not ready"
+  if [ "$HDFS_OK" = false ]; then
+    echo "        ✗ HDFS not ready"
   fi
-  echo "Health checks complete!"
-  echo ""
+
+  echo "        Testing Spark..."
+  for _ in {1..6}; do
+    if docker exec "$container" bash -lc 'timeout 10s spark-submit --version >/dev/null 2>&1' 2>/dev/null; then
+      SPARK_OK=true
+      echo "        ✓ Spark ready"
+      break
+    else
+      echo "       Waiting for Spark to be ready..."
+      sleep 10
+    fi
+  done
+  if [ "$SPARK_OK" = false ]; then
+    echo "        ✗ Spark not ready"
+  fi
+
+  echo "        Testing Hive..."
+  for _ in {1..6}; do
+    if docker exec "$container" bash -lc 'timeout 20s hive -e "show databases;" >/dev/null 2>&1' 2>/dev/null; then
+      HIVE_OK=true
+      echo "        ✓ Hive ready"
+      break
+    else
+      echo "        Waiting for Hive to be ready..."
+      sleep 10
+    fi
+  done
+  if [ "$HIVE_OK" = false ]; then
+    echo "        ✗ Hive not ready"
+  fi
+
+  info "Health checks complete!"
   echo ""
   echo "=================================================="
   if [ "$HDFS_OK" = true ] && [ "$SPARK_OK" = true ] && [ "$HIVE_OK" = true ]; then
-    echo "[+] Setup complete!"
+    info "Setup complete!"
   else
-    echo "⚠ Some services are not fully ready yet"
-    [ "$HDFS_OK" = true ] || echo "  ✗ HDFS not ready"
-    [ "$SPARK_OK" = true ] || echo "  ✗ Spark not ready"
-    [ "$HIVE_OK" = true ] || echo "  ✗ Hive not ready"
+    echo "⚠ Some services are not fully ready yet. Please wait a few minutes stop and start again."
+    exit 1
   fi
   echo "=================================================="
 }
@@ -238,6 +310,7 @@ health_check() {
 # -----------------------------------------------------------------------------
 # Start services
 # -----------------------------------------------------------------------------
+
 echo ""
 echo "=================================================="
 echo "Starting services with images:"
@@ -247,88 +320,66 @@ echo ""
 echo "Selected cluster type:"
 echo "  Mode          : $MODE node cluster"
 echo "=================================================="
+
 COMPOSE_FILE="docker-compose.single.yml"
 if [ "$MODE" = "multi" ]; then
   COMPOSE_FILE="docker-compose.yml"
 fi
+
 docker-compose -f "$COMPOSE_FILE" up -d
 
 if [ "$MODE" = "single" ]; then
-  # Initialize HDFS and Hive warehouse dirs
   docker exec -i spark bash -lc '
-      hdfs namenode -format -force >/dev/null 2>&1 || true &&
-      start-dfs.sh >/dev/null 2>&1 || true &&
+    hdfs namenode -format -force &&
+    start-dfs.sh &&
     hdfs dfs -mkdir -p /tmp &&
     hdfs dfs -mkdir -p /user/hive/warehouse &&
     hdfs dfs -chmod g+w /user/hive/warehouse
   ' 2>/dev/null || true
 
-  # Start Hive Metastore (background) then HiveServer2
   docker exec -d spark bash -lc '
     hive --service metastore &
     sleep 20
     hive --service hiveserver2
   ' 2>/dev/null || true
 
-  # Basic health checks (HDFS, Spark, Hive)
   health_check spark
+
   echo ""
-  echo "[+]Run the following command to connect to the Spark container:"
-  echo "   docker exec -it spark bash"
+  info "Run the following command to connect to the Spark container:"
+  echo "          docker exec -it spark bash"
   echo ""
-  echo "[+] Run the following commands to start the following services:"
-  echo "  - Spark Shell: spark-shell"
-  echo "  - PySpark    : pyspark"
-  echo "  - Hive       : hive"
-  echo "  - Beeline    : beeline"
-  echo "  - HDFS       : hdfs dfs -ls /"
+  info "Useful commands to run inside the container:"
+  echo "        - Spark Shell : spark-shell"
+  echo "        - PySpark     : pyspark"
+  echo "        - Hive        : hive"
+  echo "        - Beeline     : beeline"
+  echo "        - HDFS        : hdfs dfs -ls /"
   echo ""
-  echo "[+]UIs:"
-  echo "    - Spark UI        : http://localhost:4040"
-  echo "    - Spark History   : http://localhost:8090"
+  info "UIs:"
+  echo "        - Spark UI        : http://localhost:4040"
+  echo "        - Spark History   : http://localhost:8090"
   echo ""
   echo "=================================================="
 else
-  echo ""
-  echo "=================================================="
-  # Self-heal HDFS on multi-node if NameNode is not responding or has incompatible layout (no rebuild)
-  docker exec -i spark-master bash -lc '
-    set -e
-    # If NN RPC or safemode query fails, attempt clean re-init (handles incompatible old layout)
-    if ! hdfs dfsadmin -safemode get >/dev/null 2>&1; then
-      export HDFS_NAMENODE_USER=root HDFS_DATANODE_USER=root HDFS_SECONDARYNAMENODE_USER=root
-      (stop-dfs.sh || true) >/dev/null 2>&1 || true
-      rm -rf /usr/bin/data/nameNode/* /usr/bin/data/nameNodeSecondary/* /usr/bin/data/dataNode/* || true
-      hdfs namenode -format -force -nonInteractive >/dev/null 2>&1 || true
-      start-dfs.sh >/dev/null 2>&1 || true
-    fi
-    # Wait for RPC port and safemode OFF (max ~120s)
-    for i in {1..120}; do (echo > /dev/tcp/hadoop.spark/9000) >/dev/null 2>&1 && break; sleep 1; done
-    for i in {1..120}; do hdfs dfsadmin -safemode get 2>/dev/null | grep -q OFF && break; sleep 1; done
-    # Ensure Hive dirs exist
-    hdfs dfs -mkdir -p /tmp /user/hive/warehouse || true
-    hdfs dfs -chmod 1777 /tmp || true
-    hdfs dfs -chmod g+w /user/hive/warehouse || true
-  ' 2>/dev/null || true
-
-  # Basic health checks for multi-node (run against spark-master)
   health_check spark-master
+
   echo ""
-  echo "[+] Connect to the Spark master container:"
-  echo "    docker exec -it spark-master bash"
+  info "Run the following command to connect to the Spark container:"
+  echo "          docker exec -it spark-master bash"
   echo ""
-  echo "[+] Run the following commands to start the following services:"
-  echo "  - Spark Shell: spark-shell --master spark://hadoop.spark:7077"
-  echo "  - PySpark    : pyspark --master spark://hadoop.spark:7077"
-  echo "  - Hive CLI   : hive"
-  echo "  - Beeline    : beeline"
-  echo "  - HDFS       : hdfs dfs -ls /"
+  info "Useful commands to run inside the container:"
+  echo "        - Spark Shell : spark-shell --master spark://hadoop.spark:7077"
+  echo "        - PySpark     : pyspark --master spark://hadoop.spark:7077"
+  echo "        - Hive CLI    : hive"
+  echo "        - Beeline     : beeline"
+  echo "        - HDFS        : hdfs dfs -ls /"
   echo ""
-  echo "[+] UIs:"
-  echo "  - Spark UI        : http://localhost:4040"
-  echo "  - Spark Master UI : http://localhost:8080"
-  echo "  - Spark History   : http://localhost:8090"
-  echo "  - HDFS NameNode   : http://localhost:50070"
+  info "UIs:"
+  echo "       - Spark UI        : http://localhost:4040"
+  echo "       - Spark Master UI : http://localhost:8080"
+  echo "       - Spark History   : http://localhost:8090"
+  echo "       - HDFS NameNode   : http://localhost:50070"
   echo ""
   echo "=================================================="
 fi

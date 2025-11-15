@@ -274,5 +274,7 @@ Once your testing is completed ,its time to clean up your containers. Use the be
 sh setup-spark.sh --stop
 ```
 
+# Author
+Anudeep Konaboina <krantianudeep@gmail.com>
 
 

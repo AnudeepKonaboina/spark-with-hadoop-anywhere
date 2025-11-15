@@ -9,7 +9,7 @@ services:
     secrets:
       - postgres_password
   spark:
-    image: "${SPARK_HADOOP_IMAGE:-docker4ops/spark-with-hadoop:spark-3.5.7_hadoop-3.3.6_hive-4.0.0}"
+    image: "${SPARK_HADOOP_IMAGE:-docker4ops/spark-with-hadoop:spark-3.5.2_hadoop-3.3.6_hive-4.0.0_scala-2.13}"
     hostname: "hadoop.spark"
     container_name: "spark"
     restart: always

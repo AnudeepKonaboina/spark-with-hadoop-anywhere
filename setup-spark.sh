@@ -66,6 +66,18 @@ print_section() {
 }
 
 # -----------------------------------------------------------------------------
+# Colored output helper
+# -----------------------------------------------------------------------------
+# ANSI colors (disable if not a TTY)
+RESET="\033[0m"; GREEN="\033[32m"
+if [ ! -t 1 ]; then RESET=""; GREEN=""; fi
+
+info() {
+  # Print a colored [+] prefix followed by the message
+  printf "%b[+]%b %s\n" "$GREEN" "$RESET" "$*"
+}
+
+# -----------------------------------------------------------------------------
 # Parse Arguments
 # -----------------------------------------------------------------------------
 
@@ -114,10 +126,10 @@ if [ "$BUILD_MODE" = true ]; then
 else
   print_section "Pulling images from DockerHub"
   
-  docker pull docker4ops/hive-metastore:hive-4.0.0_scala-2.12
+  docker pull docker4ops/hive-metastore:hive-4.0.0
   docker pull docker4ops/spark-with-hadoop:spark-3.5.2_hadoop-3.3.6_hive-4.0.0_scala-2.13
   
-  export HIVE_METASTORE_IMAGE="docker4ops/hive-metastore:hive-4.0.0_scala-2.12"
+  export HIVE_METASTORE_IMAGE="docker4ops/hive-metastore:hive-4.0.0"
   export SPARK_HADOOP_IMAGE="docker4ops/spark-with-hadoop:spark-3.5.2_hadoop-3.3.6_hive-4.0.0_scala-2.13"
 fi
 
@@ -360,13 +372,13 @@ if [ ${#ERRORS[@]} -eq 0 ]; then
   # All tests passed - show success message
   echo ""
   echo "============================================================"
-  echo "[+] Spark with Hadoop setup completed successfully !"
+  info "Spark with Hadoop setup completed successfully !"
   echo "============================================================"
   echo ""
-  echo "[+] Run the following command to connect to the Spark container:"
+  info "Run the following command to connect to the Spark container:"
   echo "    docker exec -it spark bash"
   echo ""
-  echo "[+] Run the following commands to start the following services:"
+  info "Run the following commands to start the following services:"
   echo "  - Spark Shell   : spark-shell"
   echo "  - PySpark       : pyspark"
   echo "  - Hive(Beeline) : beeline -u jdbc:hive2://localhost:10000"

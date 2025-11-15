@@ -72,13 +72,25 @@ print_section() {
  # Colored output helpers
  # -----------------------------------------------------------------------------
  # ANSI colors (disable if not a TTY)
- RESET="\033[0m"; GREEN="\033[32m"
- if [ ! -t 1 ]; then RESET=""; GREEN=""; fi
+ RESET="\033[0m"; GREEN="\033[32m"; RED="\033[31m"
+ if [ ! -t 1 ]; then RESET=""; GREEN=""; RED=""; fi
  
  info() {
    # Print a colored [+] prefix followed by the message
    printf "%b[+]%b %s\n" "$GREEN" "$RESET" "$*"
  }
+ 
+ # Auto-color tick/cross marks in all echo output
+ shopt -s expand_aliases
+ cecho() {
+   local line="$*"
+   if [ -t 1 ]; then
+     line="${line//✓/${GREEN}✓${RESET}}"
+     line="${line//✗/${RED}✗${RESET}}"
+   fi
+   printf "%s\n" "$line"
+ }
+ alias echo='cecho'
 
 # -----------------------------------------------------------------------------
 # CLI Argument Parsing

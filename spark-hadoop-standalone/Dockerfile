@@ -67,22 +67,24 @@ COPY configs/hdfs-site.xml ${HADOOP_HOME}/etc/hadoop/hdfs-site.xml
 COPY configs/mapred-site.xml ${HADOOP_HOME}/etc/hadoop/mapred-site.xml
 ####################################################### Hadoop client install end ##########################################################################
 
-##################################################### spark-standalone without Hadoop (Scala 2.13) #####################################################################
+##################################################### spark with Hadoop3 (Scala 2.13) - Uses system Hadoop via SPARK_DIST_CLASSPATH #####################################################################
+# Note: Using hadoop3-scala2.13 build since no without-hadoop-scala-2.13 exists
+# The SPARK_DIST_CLASSPATH configured below will make Spark use the system Hadoop installation
 RUN aria2c -x 16 -s 16 -k 1M --max-tries=5 --retry-wait=3 \
-    https://archive.apache.org/dist/spark/spark-${spark_version}/spark-${spark_version}-bin-without-hadoop.tgz \
+    https://archive.apache.org/dist/spark/spark-${spark_version}/spark-${spark_version}-bin-hadoop3-scala2.13.tgz \
     -o spark.tgz && \
     tar -xzf spark.tgz && \
-    mv spark-${spark_version}-bin-without-hadoop /usr/bin/ && \
-    mkdir /usr/bin/spark-${spark_version}-bin-without-hadoop/logs && \
+    mv spark-${spark_version}-bin-hadoop3-scala2.13 /usr/bin/spark-${spark_version}-bin-hadoop3 && \
+    mkdir /usr/bin/spark-${spark_version}-bin-hadoop3/logs && \
     rm spark.tgz && \
     # Remove unnecessary files to reduce size
-    rm -rf /usr/bin/spark-${spark_version}-bin-without-hadoop/examples && \
-    rm -rf /usr/bin/spark-${spark_version}-bin-without-hadoop/data && \
-    rm -rf /usr/bin/spark-${spark_version}-bin-without-hadoop/R
+    rm -rf /usr/bin/spark-${spark_version}-bin-hadoop3/examples && \
+    rm -rf /usr/bin/spark-${spark_version}-bin-hadoop3/data && \
+    rm -rf /usr/bin/spark-${spark_version}-bin-hadoop3/R
 
 # set environment variables for spark
-ENV SPARK_HOME=/usr/bin/spark-${spark_version}-bin-without-hadoop \
-    SPARK_LOG_DIR=/usr/bin/spark-${spark_version}-bin-without-hadoop/logs
+ENV SPARK_HOME=/usr/bin/spark-${spark_version}-bin-hadoop3 \
+    SPARK_LOG_DIR=/usr/bin/spark-${spark_version}-bin-hadoop3/logs
 
 ENV PATH=${SPARK_HOME}/bin:${SPARK_HOME}/sbin:${PATH}
 

@@ -135,13 +135,15 @@ The project is built around these core principles:
 
 ### 2. Minimal but Realistic
 
-- Single-node topology, but with **real HDFS and Hive Metastore** semantics
-- Enough moving parts to reproduce production issues without cluster overhead
+- **Two deployment modes**: Single-node for simplicity, multi-node for distributed testing
+- Both modes include **real HDFS and Hive Metastore** semantics
+- Enough moving parts to reproduce production issues without excessive cluster overhead
 - All core components working together as they would in production
 
 ### 3. Quick Setup
 
-- A single script (`setup-spark.sh`) orchestrates build and run
+- A single script (`setup-spark.sh`) orchestrates build and run for both modes
+- Simple flags: `--run`, `--build --run`, `--node-type {single|multi}`, `--stop`
 - Docker images are buildable from scratch (no opaque base images)
 - Easy to share exact environments for bug reports
 
@@ -161,44 +163,74 @@ The project is built around these core principles:
 
 # **Architecture**
 
-Each branch provides a logically similar architecture with version-specific artifacts:
+Each branch provides two deployment modes with version-specific artifacts:
 
 ![Spark with Hadoop Anywhere Architecture](images/architecture.jpg)
 
-There are two containers as you see in the architectural diagram above:
+## **Deployment Modes**
 
-### Spark Container
+### Single-Node Mode (Default)
 
-This container runs the below three services:
+A single all-in-one container with Spark + HDFS + Hive for quick development and testing.
 
-#### Spark
+**Containers:**
+- **Spark Container**: Runs Spark standalone (master + worker), HDFS (NameNode + DataNode), and Hive CLI
+- **Hive Metastore Container**: PostgreSQL-backed Hive metastore
+
+**Use Cases:**
+- Quick prototyping and development
+- Learning and experimentation
+- Simple debugging scenarios
+- Minimal resource consumption
+
+### Multi-Node Mode
+
+A distributed Spark Standalone cluster with master and worker nodes for realistic production-like scenarios.
+
+**Containers:**
+- **Spark Master Container**: Runs Spark master, HDFS (NameNode + DataNode + SecondaryNameNode), and Hive CLI
+- **Spark Worker Containers** (2 workers): Each runs a Spark worker process
+- **Hive Metastore Container**: PostgreSQL-backed Hive metastore
+
+**Use Cases:**
+- Testing distributed Spark applications
+- Debugging executor-level issues
+- Testing resource allocation and scheduling
+- Simulating multi-node cluster behavior
+
+## **Component Details**
+
+### Spark
   
-  - Spark runs in **standalone mode** (master + worker in a single container)
-  - Spark distributions are wired to the Hadoop client classpath
-  - Configurable through standard `spark-defaults.conf`, `spark-env.sh`, etc.
+- **Single-node**: Spark runs in standalone mode (master + worker in one container)
+- **Multi-node**: Spark master on one container, workers on separate containers
+- Spark distributions are wired to the Hadoop client classpath
+- Configurable through standard `spark-defaults.conf`, `spark-env.sh`, etc.
+- Master URL: `spark://hadoop.spark:7077` (for multi-node)
   
-#### Hadoop (HDFS)
+### Hadoop (HDFS)
   
-  - Single-node HDFS **namenode + datanode**
-  - Backed by container-local storage paths (no external FS required)
-  - Bootstrapped at startup with **format-once** pattern and idempotent initialization
+- **Single-node**: NameNode + DataNode in one container
+- **Multi-node**: NameNode + DataNode + SecondaryNameNode on master, shared with workers
+- Backed by container-local storage paths (no external FS required)
+- Bootstrapped at startup with **format-once** pattern and idempotent initialization
+- Shared volumes ensure data persistence across containers
 
-#### Hive CLI
+### Hive
   
-  - Hive CLI and Beeline available inside the Spark container
-   
-### Hive metastore Container
-
-External Hive Metastore backed by PostgreSQL in a dedicated container
-  - `hive-site.xml` configured for:
-    - Metastore DB credentials
-    - Metastore host/port
-    - Shared warehouse location
+- Hive CLI and Beeline available inside the Spark container(s)
+- External Hive Metastore backed by PostgreSQL in a dedicated container
+- `hive-site.xml` configured for:
+  - Metastore DB credentials
+  - Metastore host/port
+  - Shared warehouse location
 
 ## **Container Orchestration**
 
-- `docker-compose.yml` wires together all services
+- `docker-compose.yml` (multi-node) and `docker-compose.single.yml` (single-node) wire together all services
 - Readiness checks ensure proper startup order
+- Network aliases for inter-container communication
+- Shared volumes for HDFS data in multi-node setup
 - One-command setup and teardown
 
 ---
@@ -458,57 +490,106 @@ echo "<your_strong_password_here>" > secrets/postgres_password.txt
 
 ### Step-3: Run the Setup Script
 
-There are two ways of running the setup script
+There are two ways of running the setup script, and you can optionally choose between single-node and multi-node deployment.
 
-**Option A: Use prebuilt images from DockerHub (fast setup and recommended)**
+#### **Cluster Mode Options:**
+
+- **Single-node (default)**: A single container with Spark + HDFS + Hive
+- **Multi-node**: Spark master + 2 workers with shared HDFS
+
+Specify the mode with `--node-type {single|multi}` (defaults to `single` if omitted)
+
+#### **Option A: Use prebuilt images from DockerHub (fast setup and recommended)**
 
 All images are pre-built and available on DockerHub: [docker4ops/spark-with-hadoop](https://hub.docker.com/r/docker4ops/spark-with-hadoop)
 
 ```bash
+# Single-node (default)
 sh setup-spark.sh --run
+
+# Multi-node cluster
+sh setup-spark.sh --run --node-type multi
 ```
 
 This pulls pre-built images and starts the stack in seconds. Perfect for quick testing and development.
 
-**Option B: Build images locally**
+#### **Option B: Build images locally**
 
 ```bash
+# Single-node (default)
 sh setup-spark.sh --build --run
+
+# Multi-node cluster
+sh setup-spark.sh --build --run --node-type multi
 ```
 
 Build from source if you want to customize the Dockerfile or add additional packages.
 
 This will:
 - Build/pull Docker images
-- Start containers using Docker Compose
+- Start containers using Docker Compose (single or multi-node based on your choice)
 - Initialize Spark, HDFS, and Hive Metastore
 - Verify all services are healthy
 
 ### Step-4: Verify Running Containers
 
-Once the setup is completed 
+Once the setup is completed, verify the running containers:
+
 ```bash
 docker ps
 ```
-You should see two containers:
-- A `spark` container
-- A `hive-metastore` container
+
+#### **Single-node deployment:**
+You should see 2 containers:
+- `spark` - Spark standalone + HDFS + Hive CLI
+- `hive_metastore` - PostgreSQL-backed Hive Metastore
+
+Example output:
+```
+CONTAINER ID   IMAGE                     COMMAND                  PORTS                              NAMES
+1af5afd31789   spark-with-hadoop:local   "/usr/local/bin/star…"   0.0.0.0:4040-4041->4040-4041/tcp   spark
+c8c3e725a73c   hive-metastore:local      "docker-entrypoint.s…"   5432/tcp                           hive_metastore
+```
+
+#### **Multi-node deployment:**
+You should see 4 containers:
+- `spark-master` - Spark master + HDFS (NameNode, DataNode, SecondaryNameNode) + Hive CLI
+- `spark-worker-1` - Spark worker #1
+- `spark-worker-2` - Spark worker #2
+- `hive_metastore` - PostgreSQL-backed Hive Metastore
+
+Example output:
+```
+CONTAINER ID   IMAGE                        COMMAND                  PORTS                              NAMES
+18bd26ade9ac   spark-with-hadoop:local      "bash -lc..."            0.0.0.0:7077->7077/tcp             spark-master
+973ee17a76e8   spark-with-hadoop:local      "bash -lc..."            8081/tcp                           spark-worker-1
+60e52fdc6bc5   spark-with-hadoop:local      "bash -lc..."            8081/tcp                           spark-worker-2
+12fcb76b3af2   hive-metastore:local         "docker-entrypoint.s…"   5432/tcp                           hive_metastore
+```
 
 ---
 
 # **How to use**
 
-### Connect to the Spark container using the below command:
+### Connect to the Spark container
 
-```
+#### **Single-node:**
+```bash
 docker exec -it spark bash
+```
+
+#### **Multi-node (connect to master):**
+```bash
+docker exec -it spark-master bash
 ```
 
 ## Spark
 
-To start a Spark shell:
+### Single-node Mode
 
-```
+Start a Spark shell in local mode:
+
+```bash
 # Scala shell
 spark-shell
 
@@ -519,7 +600,33 @@ pyspark
 spark-submit --class com.example.MyApp my-app.jar
 ```
 
-Access the Spark UI at `http://localhost:4040`
+### Multi-node Mode
+
+Connect to the Spark cluster master:
+
+```bash
+# Scala shell connected to cluster
+spark-shell --master spark://hadoop.spark:7077
+
+# Python shell connected to cluster
+pyspark --master spark://hadoop.spark:7077
+
+# Submit a job to the cluster
+spark-submit --master spark://hadoop.spark:7077 \
+  --class com.example.MyApp \
+  my-app.jar
+
+# Control parallelism
+spark-shell --master spark://hadoop.spark:7077 \
+  --executor-cores 1 \
+  --total-executor-cores 2
+```
+
+### Access Web UIs
+
+- **Spark Application UI**: `http://localhost:4040` (when app is running)
+- **Spark Master UI** (multi-node): `http://localhost:8080`
+- **Spark History Server**: `http://localhost:18080`
 
 ---
 
@@ -614,11 +721,17 @@ services:
 
 ```text
 spark-with-hadoop-anywhere/
-├── docker-compose.yml          # Orchestration
-├── setup-spark.sh              # Entry script
+├── docker-compose.yml          # Multi-node orchestration
+├── docker-compose.single.yml   # Single-node orchestration
+├── setup-spark.sh              # Entry script (supports --node-type)
 ├── spark-hadoop-standalone/
 │   ├── Dockerfile              # Spark/Hadoop/Hive image
-│   └── configs/                # Config files
+│   └── configs/                # Config files (HDFS, Hive, etc.)
+├── hive-metastore/
+│   └── Dockerfile              # Hive Metastore image
+├── configs/                    # Shared configuration files
+├── scripts/
+│   └── start-services.sh       # Service initialization script
 ├── secrets/                    # (Git-ignored) secret files
 ├── images/                     # Architecture diagrams
 └── docs/                       # GitHub Pages site
@@ -628,10 +741,47 @@ spark-with-hadoop-anywhere/
 
 ## **Limitations**
 
-- **Not a production deployment template**: No HA, no multi-node replication, no built-in security hardening
-- **Single-node semantics**: Useful for functional correctness, less representative for large-scale performance testing
-- **No direct Databricks features**: DBR-compatible at the Spark level only, not the control plane
-- **Not cloud-specific**: No opinionated integration with S3/ADLS/GCS by default (though you can add it)
+- **Not a production deployment template**: No HA, no automatic replication, no built-in security hardening
+- **Limited scalability**: Multi-node mode simulates distributed behavior but is not suitable for large-scale performance testing
+- **Resource constraints**: Runs on a single machine, so total compute/memory is bounded by host resources
+- **No direct Databricks features**: DBR-compatible at the Spark OSS level only, not the Databricks control plane, notebooks, or Unity Catalog
+- **No cloud-specific integration by default**: No opinionated integration with S3/ADLS/GCS out of the box (though you can add it via configuration)
+- **Development/testing focus**: Designed for debugging, learning, and reproducibility—not production workloads
+
+---
+
+## **Cleanup**
+
+When you're done testing, you can stop and remove all containers with a single command:
+
+```bash
+sh setup-spark.sh --stop
+```
+
+This will:
+- Stop all running containers (single or multi-node)
+- Remove containers, networks, and volumes
+- Clean up resources
+
+Alternatively, you can use Docker Compose directly:
+
+```bash
+# For single-node
+docker-compose -f docker-compose.single.yml down -v
+
+# For multi-node
+docker-compose down -v
+```
+
+To also remove the Docker images:
+
+```bash
+# Remove all images
+docker rmi -f $(docker images -q)
+
+# Or be more selective
+docker rmi spark-with-hadoop:local hive-metastore:local
+```
 
 ---
 

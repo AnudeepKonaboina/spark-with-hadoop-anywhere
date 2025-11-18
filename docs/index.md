@@ -174,7 +174,7 @@ Each branch provides two deployment modes with version-specific artifacts:
 A single all-in-one container with Spark + HDFS + Hive for quick development and testing.
 
 **Containers:**
-- **Spark Container**: Runs Spark standalone (master + worker), HDFS (NameNode + DataNode), and Hive CLI
+- **Spark Container**: Runs Spark (master + worker), HDFS (NameNode + DataNode), and Hive CLI
 - **Hive Metastore Container**: PostgreSQL-backed Hive metastore
 
 **Use Cases:**
@@ -188,8 +188,8 @@ A single all-in-one container with Spark + HDFS + Hive for quick development and
 A distributed Spark Standalone cluster with master and worker nodes for realistic production-like scenarios.
 
 **Containers:**
-- **Spark Master Container**: Runs Spark master, HDFS (NameNode + DataNode + SecondaryNameNode), and Hive CLI
-- **Spark Worker Containers** (2 workers): Each runs a Spark worker process
+- **Spark Master Container**: Runs Spark master, HDFS (NameNode), and Hive CLI
+- **Spark Worker Containers** (2 workers): Each runs a Spark worker process and HDFS Datanodes)
 - **Hive Metastore Container**: PostgreSQL-backed Hive metastore
 
 **Use Cases:**
@@ -202,7 +202,7 @@ A distributed Spark Standalone cluster with master and worker nodes for realisti
 
 ### Spark
   
-- **Single-node**: Spark runs in standalone mode (master + worker in one container)
+- **Single-node**: Spark runs master + worker on the same container
 - **Multi-node**: Spark master on one container, workers on separate containers
 - Spark distributions are wired to the Hadoop client classpath
 - Configurable through standard `spark-defaults.conf`, `spark-env.sh`, etc.
@@ -211,7 +211,7 @@ A distributed Spark Standalone cluster with master and worker nodes for realisti
 ### Hadoop (HDFS)
   
 - **Single-node**: NameNode + DataNode in one container
-- **Multi-node**: NameNode + DataNode + SecondaryNameNode on master, shared with workers
+- **Multi-node**: NameNode  + SecondaryNameNode on master, shared with workers
 - Backed by container-local storage paths (no external FS required)
 - Bootstrapped at startup with **format-once** pattern and idempotent initialization
 - Shared volumes ensure data persistence across containers
@@ -224,14 +224,6 @@ A distributed Spark Standalone cluster with master and worker nodes for realisti
   - Metastore DB credentials
   - Metastore host/port
   - Shared warehouse location
-
-## **Container Orchestration**
-
-- `docker-compose.yml` (multi-node) and `docker-compose.single.yml` (single-node) wire together all services
-- Readiness checks ensure proper startup order
-- Network aliases for inter-container communication
-- Shared volumes for HDFS data in multi-node setup
-- One-command setup and teardown
 
 ---
 
@@ -726,15 +718,12 @@ spark-with-hadoop-anywhere/
 ├── setup-spark.sh              # Entry script (supports --node-type)
 ├── spark-hadoop-standalone/
 │   ├── Dockerfile              # Spark/Hadoop/Hive image
-│   └── configs/                # Config files (HDFS, Hive, etc.)
 ├── hive-metastore/
 │   └── Dockerfile              # Hive Metastore image
 ├── configs/                    # Shared configuration files
 ├── scripts/
 │   └── start-services.sh       # Service initialization script
 ├── secrets/                    # (Git-ignored) secret files
-├── images/                     # Architecture diagrams
-└── docs/                       # GitHub Pages site
 ```
 
 ---
@@ -763,25 +752,7 @@ This will:
 - Remove containers, networks, and volumes
 - Clean up resources
 
-Alternatively, you can use Docker Compose directly:
 
-```bash
-# For single-node
-docker-compose -f docker-compose.single.yml down -v
-
-# For multi-node
-docker-compose down -v
-```
-
-To also remove the Docker images:
-
-```bash
-# Remove all images
-docker rmi -f $(docker images -q)
-
-# Or be more selective
-docker rmi spark-with-hadoop:local hive-metastore:local
-```
 
 ---
 

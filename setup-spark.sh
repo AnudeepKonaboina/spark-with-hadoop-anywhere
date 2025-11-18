@@ -196,6 +196,7 @@ if [ "$STOP_MODE" = true ]; then
 
   echo "Pruning Docker system (networks, caches, etc.)..."
   docker system prune -f >/dev/null 2>&1 || true
+  docker volume prune -f >/dev/null 2>&1 || true
 
   echo "Done."
   exit 0
@@ -236,6 +237,70 @@ else
 fi
 
 # -----------------------------------------------------------------------------
+# HDFS Self-Heal Function
+# -----------------------------------------------------------------------------
+fix_hdfs() {
+  local container=$1
+  echo ""
+  echo "=================================================="
+  info "Attempting to fix HDFS..."
+  echo "=================================================="
+  
+  # Stop HDFS services
+  echo "→ Stopping HDFS services..."
+  docker exec "$container" bash -c 'stop-dfs.sh' >/dev/null 2>&1 || true
+  sleep 3
+  
+  # Clean corrupt HDFS data
+  echo "→ Cleaning HDFS data directories..."
+  docker exec "$container" bash -c '
+    rm -rf /usr/bin/data/nameNode/* \
+           /usr/bin/data/dataNode/* \
+           /usr/bin/data/nameNodeSecondary/* 2>/dev/null || true
+  ' >/dev/null 2>&1
+  
+  # Reformat NameNode
+  echo "→ Reformatting HDFS NameNode..."
+  if docker exec "$container" bash -c 'hdfs namenode -format -force' 2>&1 | grep -q "successfully formatted"; then
+    echo "  ✓ NameNode format successful"
+    
+    # Verify fsimage file was created
+    if docker exec "$container" bash -c '[ -f /usr/bin/data/nameNode/current/fsimage_0000000000000000000 ]' 2>/dev/null; then
+      echo "  ✓ Verified: fsimage file created"
+    else
+      echo "  ✗ Warning: fsimage file not found"
+    fi
+  else
+    echo "  ✗ NameNode format may have failed"
+  fi
+  
+  # Restart HDFS services
+  echo "→ Restarting HDFS services..."
+  docker exec "$container" bash -c 'start-dfs.sh' >/dev/null 2>&1 &
+  
+  # Wait for NameNode to start
+  echo "→ Waiting for NameNode to be ready..."
+  local waited=0
+  local max_wait=45
+  while [ $waited -lt $max_wait ]; do
+    if docker exec "$container" bash -c 'timeout 5 hdfs dfs -ls / >/dev/null 2>&1' 2>/dev/null; then
+      echo "  ✓ HDFS is now responding"
+      echo "=================================================="
+      return 0
+    fi
+    if [ $((waited % 10)) -eq 0 ] && [ $waited -gt 0 ]; then
+      echo "  Still waiting... (${waited}s/${max_wait}s)"
+    fi
+    sleep 3
+    waited=$((waited + 3))
+  done
+  
+  echo "  ✗ HDFS did not recover after $max_wait seconds"
+  echo "=================================================="
+  return 1
+}
+
+# -----------------------------------------------------------------------------
 # Health check helper
 # -----------------------------------------------------------------------------
 
@@ -261,8 +326,16 @@ health_check() {
       sleep 10
     fi
   done
+  
+  # If HDFS failed initial checks, attempt automatic fix
   if [ "$HDFS_OK" = false ]; then
-    echo "        ✗ HDFS not ready"
+    echo "        ✗ HDFS not ready - attempting automatic fix..."
+    if fix_hdfs "$container"; then
+      HDFS_OK=true
+      echo "        ✓ HDFS recovered successfully"
+    else
+      echo "        ✗ HDFS auto-fix failed"
+    fi
   fi
 
   echo "        Testing Spark..."

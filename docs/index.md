@@ -324,21 +324,16 @@ You get a <strong>full analytics node</strong>: Spark + HDFS + Hive Metastore + 
 
 All Spark/Hadoop/Hive combinations are pre-built and available on **DockerHub**: [docker4ops/spark-with-hadoop](https://hub.docker.com/r/docker4ops/spark-with-hadoop)
 
-- **Zero build time**: Pull and run in seconds
+- **Less setup time**: Pull and run in seconds
 - **Consistent images**: Same image works across all machines
 - **Multiple tags**: Each branch has a corresponding Docker image tag
 - **Always available**: No dependency on building from source
-
-Example tags:
-- `spark-3.5.7_hadoop-3.3.6_hive-4.0.0`
-- `spark-3.5.2_hadoop-3.3.6_hive-4.0.0_scala-2.12`
-- `spark-4.0.0_hadoop-3.4.1_hive-4.0.1`
 
 ---
 
 ## **Some Use Cases**
 
-### 1. Reproducing Databricks / DBR Behavior Locally
+### 1. Reproducing OSS VS DBR Behavior Locally
 
 <div style="background: linear-gradient(135deg, #f5f5f5, #ffffff); border-left: 4px solid #159957; padding: 1.5rem; margin: 1.5rem 0; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
 

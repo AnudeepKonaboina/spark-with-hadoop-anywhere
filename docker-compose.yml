@@ -1,6 +1,6 @@
 services:
   hive-metastore:
-    image: "${HIVE_METASTORE_IMAGE:-docker4ops/hive-metastore:hive-4.0.0}"
+    image: "${HIVE_METASTORE_IMAGE:-docker4ops/hive-metastore:hive-4.0.1}"
     restart: always
     container_name: "hive_metastore"
     hostname: "metastore.hive"
@@ -8,25 +8,65 @@ services:
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
     secrets:
       - postgres_password
-  spark:
-    image: "${SPARK_HADOOP_IMAGE:-docker4ops/spark-with-hadoop:spark-3.5.7_hadoop-3.3.6_hive-4.0.0}"
+  spark-master:
+    image: "${SPARK_HADOOP_IMAGE:-docker4ops/spark-with-hadoop:spark-4.0.0_hadoop-3.4.1_hive-4.0.1}"
     hostname: "hadoop.spark"
-    container_name: "spark"
+    container_name: "spark-master"
     restart: always
     ports:
+      - "7077:7077"
+      - "8080:8080"
       - "4040:4040"
       - "4041:4041"
-      - "8089:8088"
       - "8090:18080"
       - "2222:22"
     expose:
-      - "23"
+      - "22"
     depends_on:
       - hive-metastore
     privileged: "true"
-    command: "/usr/local/bin/start-services.sh"
+    command: >
+      bash -lc "
+        /usr/local/bin/start-services.sh &
+        $${SPARK_HOME}/sbin/start-master.sh &&
+        tail -f /dev/null
+      "
+    networks:
+      default:
+        aliases:
+          - hadoop.spark
+    volumes:
+      - hdfs_name:/usr/bin/data/nameNode
+      - hdfs_data:/usr/bin/data/dataNode
+      - hdfs_sname:/usr/bin/data/nameNodeSecondary
     secrets:
       - postgres_password
+  spark-worker-1:
+    image: "${SPARK_HADOOP_IMAGE:-docker4ops/spark-with-hadoop:spark-4.0.0_hadoop-3.4.1_hive-4.0.1}"
+    container_name: "spark-worker-1"
+    restart: always
+    depends_on:
+      - spark-master
+    command: >
+      bash -lc "
+        $${SPARK_HOME}/sbin/start-slave.sh spark://hadoop.spark:7077 &&
+        tail -f /dev/null
+      "
+  spark-worker-2:
+    image: "${SPARK_HADOOP_IMAGE:-docker4ops/spark-with-hadoop:spark-4.0.0_hadoop-3.4.1_hive-4.0.1}"
+    container_name: "spark-worker-2"
+    restart: always
+    depends_on:
+      - spark-master
+    command: >
+      bash -lc "
+        $${SPARK_HOME}/sbin/start-slave.sh spark://hadoop.spark:7077 &&
+        tail -f /dev/null
+      "
 secrets:
   postgres_password:
     file: ./secrets/postgres_password.txt
+volumes:
+  hdfs_name:
+  hdfs_data:
+  hdfs_sname:

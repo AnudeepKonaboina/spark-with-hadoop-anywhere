@@ -176,30 +176,38 @@ fi
 # -----------------------------------------------------------------------------
 
 if [ "$STOP_MODE" = true ]; then
-  print_section "Stopping services (auto-detected)"
+  print_section "Stopping services and cleaning up volumes"
 
   # Auto-detect running stack by container names
   if docker ps --format '{{.Names}}' | grep -q '^spark$'; then
     echo "[single] Detected 'spark' container. Bringing down docker-compose.single.yml..."
-    docker-compose -f "docker-compose.single.yml" down
+    docker-compose -f "docker-compose.single.yml" down -v
   elif docker ps --format '{{.Names}}' | grep -q '^spark-master$'; then
     echo "[multi] Detected 'spark-master' container. Bringing down docker-compose.yml..."
-    docker-compose -f "docker-compose.yml" down
+    docker-compose -f "docker-compose.yml" down -v
   else
     echo "No known containers running (spark or spark-master). Attempting best-effort stop on both stacks..."
-    docker-compose -f "docker-compose.single.yml" down || true
-    docker-compose -f "docker-compose.yml" down || true
+    docker-compose -f "docker-compose.single.yml" down -v 2>/dev/null || true
+    docker-compose -f "docker-compose.yml" down -v 2>/dev/null || true
   fi
-
+  
   echo ""
   echo "Removing all Docker images (this may take a while)..."
   docker rmi -f $(docker images -a -q) >/dev/null 2>&1 || true
 
-  echo "Pruning Docker system (networks, caches, volumes etc.)..."
+  echo "Pruning Docker system (networks, caches, etc.)..."
   docker system prune -f >/dev/null 2>&1 || true
+  
+  # Note: docker volume prune is now redundant since we used 'down -v' above
+  # but keeping it as a safety net for any orphaned volumes
   docker volume prune -f >/dev/null 2>&1 || true
 
-  echo "Done."
+  echo ""
+  echo "✓ Cleanup complete!"
+  echo "  - Containers stopped and removed"
+  echo "  - Volumes removed"
+  echo "  - Images removed"
+  echo "  - Networks cleaned"
   exit 0
 fi
 
